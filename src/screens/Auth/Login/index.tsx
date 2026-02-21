@@ -1,26 +1,61 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
-  TouchableOpacity,
   StatusBar,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@react-native-vector-icons/feather';
+import { yupResolver } from "@hookform/resolvers/yup"
+
+// hooks
+import { useForm } from "react-hook-form"
+import { useNavigation } from '@react-navigation/native';
 
 // components
 import AppText from '../../../components/Common/AppText';
 import AppInput from '../../../components/Common/AppInput';
 import TextButton from '../../../components/Common/TextButton';
 import FullWidthButton from '../../../components/Common/FullWidthButton';
+import ValidationController from '../../../components/Common/ValidationController';
 
 // constants
 import colors from '../../../constants/colors';
 import styles from './styles';
 
-const LoginScreen: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [secureText, setSecureText] = useState<boolean>(true);
+// types
+import { LoginFormValues } from './types';
+import { AuthScreensPropTypes } from '../../../navigation';
+
+// Misc
+import { loginFormSchema } from '../../../schema/validationSchema';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+const hookFormParams = {
+  defaultValues: {
+    email: "",
+    password: "",
+    isPasswordVisible: false,
+  },
+  resolver: yupResolver(loginFormSchema)
+};
+
+const LoginScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<AuthScreensPropTypes>>();
+  
+  const form = useForm<LoginFormValues>(hookFormParams)
+  
+  const onValidFormSubmission = (validFormData: unknown) => {
+    console.log('validFormData :: ', validFormData)
+  }
+
+  const onInvalidFormSubmission = (invalidFormData: unknown) => {
+    console.log('invalidFormData :: ', invalidFormData)
+  }
+
+  const handleCreateAccount = () => {
+    navigation.navigate('Signup')
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -45,23 +80,26 @@ const LoginScreen: React.FC = () => {
 
       {/* Email */}
       <AppText style={styles.label}>{"Email Address"}</AppText>
-      <AppInput
-        leftIcon={
-          <Icon name="mail" size={18} color={colors.mutedBlueGray} />
-        }
-        containerStyle={styles.inputContainer}
-        placeholder="name@example.com"
-        placeholderTextColor={colors.mutedBlueGray}
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <ValidationController
+        control={form.control}
+        name={'email'}
+      >
+        <AppInput
+          leftIcon={
+            <Icon name="mail" size={18} color={colors.mutedBlueGray} />
+          }
+          containerStyle={styles.inputContainer}
+          placeholder="name@example.com"
+          placeholderTextColor={colors.mutedBlueGray}
+          style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+      </ValidationController>
 
-      {/* Password */}
+      {/* Forgot Password */}
       <View style={styles.passwordHeader}>
-        <AppText style={styles.label}>{"Master Password"}</AppText>
+        <AppText style={styles.label}>{"Password"}</AppText>
         <TextButton
           textStyle={styles.forgot}
           btnText='Forgot Password?'
@@ -69,45 +107,38 @@ const LoginScreen: React.FC = () => {
         />
       </View>
 
-      <AppInput
-        leftIcon={
-          <Icon name="lock" size={18} color={colors.mutedBlueGray} />
-        }
-        rightIcon={
-          <TouchableOpacity
-            testID='password-toggle'
-            onPress={() => setSecureText(!secureText)}>
-            <Icon
-              name={secureText ? 'eye' : 'eye-off'}
-              size={18}
-              color={colors.mutedBlueGray}
-            />
-          </TouchableOpacity>
-        }
-        containerStyle={styles.inputContainer}
-        placeholder="••••••••••"
-        placeholderTextColor={colors.mutedBlueGray}
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry={secureText}
-      />
+      {/* Password */}
+      <ValidationController
+        control={form.control}
+        name={'password'}
+      >
+        <AppInput
+          leftIcon={
+            <Icon name="lock" size={18} color={colors.mutedBlueGray} />
+          }
+          containerStyle={styles.inputContainer}
+          placeholder="••••••••••"
+          placeholderTextColor={colors.mutedBlueGray}
+          style={styles.input}
+          securedText
+        />
+      </ValidationController>
 
       {/* Login Button */}
       <FullWidthButton
         buttonText="Login"
-        onPress={() => {}}
+        onPress={form.handleSubmit(onValidFormSubmission, onInvalidFormSubmission)}
         loading={false}
         disabled={false}
       />
 
       {/* Footer */}
-      <View style={styles.footer}>
+      <Pressable onPress={handleCreateAccount} style={styles.footer}>
         <AppText style={styles.footerText}>
           {`Don't have an account? `}
           <AppText style={styles.createAccount}>{"Create Account"}</AppText>
         </AppText>
-      </View>
+      </Pressable>
     </SafeAreaView>
   );
 };

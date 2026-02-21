@@ -7,5 +7,7 @@ export default {
     charcoal: '#1A1A1A',
     lightCoolGray: '#E7EEF1',
     mutedTeal: '#4F7A87',
-    iceGray: '#D6E0E4'
+    iceGray: '#D6E0E4',
+    red: 'red',
+    lightCyanBlue: '#E6F2F5',
 }
