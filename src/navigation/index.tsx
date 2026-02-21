@@ -5,8 +5,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/Auth/Login';
 import SignUpScreen from '../screens/Auth/Signup';
 import AccountVerification from '../screens/Auth/AccountVerification';
+import HomeScreen from '../screens/App/HomeScreen';
 
 export type AuthScreensPropTypes = {
+  Home: undefined
   Login: undefined
   Signup: undefined
   Verification: undefined
@@ -14,12 +16,13 @@ export type AuthScreensPropTypes = {
 
 const RootStack = createNativeStackNavigator<AuthScreensPropTypes>({
   screens: {
+    Home: HomeScreen,
     Login: LoginScreen,
     Signup: SignUpScreen,
     Verification: AccountVerification,
   },
   screenOptions() {
-    return{
+    return {
       headerShown: false
     }
   },
