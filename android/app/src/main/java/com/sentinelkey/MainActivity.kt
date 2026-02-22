@@ -8,6 +8,8 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 import android.os.Bundle
 import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
 
+import com.splashview.SplashView
+
 class MainActivity : ReactActivity() {
 
   /**
@@ -19,6 +21,7 @@ class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
     super.onCreate(savedInstanceState)
+    SplashView.showSplashView(this)
   }
 
   /**
