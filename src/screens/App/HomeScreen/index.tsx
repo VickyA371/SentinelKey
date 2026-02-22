@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { FlatList, ListRenderItemInfo } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useNavigation } from "@react-navigation/native";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 
 // components
 import Header from "../../../components/HomeScreen/Header";
@@ -13,6 +13,9 @@ import AddButton from "../../../components/HomeScreen/AddButton";
 import ItemPreviewSheet from "../../../components/HomeScreen/ItemPreviewSheet";
 
 import styles from "./styles";
+
+// types
+import { AppScreensPropTypes } from "../../../navigation/types";
 
 const VAULT_DATA = [
   {
@@ -65,8 +68,9 @@ VAULT_DATA[3].iconBg = "#8B1A1A"; // Netflix (dark red as per design image)
 VAULT_DATA[4].iconBg = "#F0F9FF"; // Dropbox
 
 function HomeScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const handlePresentItem = (item: any) => {
@@ -102,7 +106,7 @@ function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
-      <AddButton onPress={() => navigation.navigate('AddListItem' as never)} />
+      <AddButton onPress={() => navigation.navigate('AddListItem')} />
       <ItemPreviewSheet
         ref={bottomSheetModalRef}
         item={selectedItem}

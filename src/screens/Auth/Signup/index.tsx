@@ -26,10 +26,10 @@ import colors from '../../../constants/colors';
 // types
 import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { type SignupFormValues } from './types';
-import { type AuthScreensPropTypes } from '../../../navigation';
 
 // misc
 import { signUpFormSchema } from '../../../schema/validationSchema';
+import { AuthScreensPropTypes } from '../../../navigation/types';
 
 const hookFormParams = {
   defaultValues: {

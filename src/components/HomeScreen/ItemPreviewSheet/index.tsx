@@ -1,8 +1,8 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { useNavigation } from "@react-navigation/native";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 
 // components
 import AppText from "../../Common/AppText";
@@ -11,14 +11,16 @@ import DeleteModal from "../../Common/DeleteModal";
 // constants
 import colors from "../../../constants/colors";
 
+// types
+import { AppScreensPropTypes } from "../../../navigation/types";
+
 interface Props {
     item: any;
     onClose: () => void;
 }
 
 const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onClose }, ref) => {
-    const navigation = useNavigation();
-    const snapPoints = useMemo(() => ["85%"], []);
+    const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
     const [showPassword, setShowPassword] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
@@ -26,9 +28,8 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         (props: any) => (
             <BottomSheetBackdrop
                 {...props}
-                opacity={0.5}
-                appearsAtThreshold={0}
-                disappearsAtThreshold={-1}
+
+                disappearsOnIndex={-1}
             />
         ),
         []
@@ -36,7 +37,6 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
 
     const handleEdit = () => {
         onClose();
-        // @ts-ignore
         navigation.navigate("AddListItem", { item });
     };
 
@@ -56,11 +56,12 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         <>
             <BottomSheetModal
                 ref={ref}
-                snapPoints={snapPoints}
                 backdropComponent={renderBackdrop}
                 onDismiss={onClose}
                 handleIndicatorStyle={styles.indicator}
                 backgroundStyle={styles.background}
+                enableDismissOnClose
+                enableDynamicSizing
             >
                 <BottomSheetView style={styles.container}>
                     <View style={styles.header}>
@@ -105,12 +106,12 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                     <View style={styles.footer}>
                         <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
                             <Ionicons name="create-outline" size={20} color={colors.deepTeal} style={{ marginRight: 8 }} />
-                            <AppText style={styles.editButtonText}>Edit Item</AppText>
+                            <AppText style={styles.editButtonText}>{"Edit Item"}</AppText>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.deleteButton} onPress={handleDeletePress}>
                             <Ionicons name="trash-outline" size={18} color={colors.red} style={{ marginRight: 8 }} />
-                            <AppText style={styles.deleteButtonText}>Delete Record</AppText>
+                            <AppText style={styles.deleteButtonText}>{"Delete Record"}</AppText>
                         </TouchableOpacity>
                     </View>
                 </BottomSheetView>

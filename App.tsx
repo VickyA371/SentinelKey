@@ -1,14 +1,28 @@
-import { StatusBar, useColorScheme } from "react-native";
+import { useEffect } from "react";
+import { StatusBar, StyleSheet, useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import RootNavigation from "./src/navigation";
+import AppContent from "./src/navigation";
+import { hideSplash } from "react-native-splash-view";
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  }
+})
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
+  useEffect(() => {
+    setTimeout(() => {
+      hideSplash();
+    }, 2000)
+  }, []);
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.root}>
       <BottomSheetModalProvider>
         <SafeAreaProvider>
           <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -16,12 +30,6 @@ function App() {
         </SafeAreaProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
-  );
-}
-
-function AppContent() {
-  return (
-    <RootNavigation />
   );
 }
 

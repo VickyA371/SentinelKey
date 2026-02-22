@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { View, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
@@ -17,13 +17,13 @@ import colors from "../../../constants/colors";
 import styles from "./styles";
 
 // types
-import { AuthScreensPropTypes } from "../../../navigation";
 import { AddListItemFormValues } from "./types";
 import { addListItemSchema } from "../../../schema/validationSchema";
+import { AppScreensPropTypes } from "../../../navigation/types";
 
 const AddListItem = () => {
     const navigation = useNavigation();
-    const route = useRoute<RouteProp<AuthScreensPropTypes, 'AddListItem'>>();
+    const route = useRoute<RouteProp<AppScreensPropTypes, 'AddListItem'>>();
     const editItem = route.params?.item;
     const isEditing = !!editItem;
 

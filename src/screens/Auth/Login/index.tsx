@@ -10,7 +10,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 
 // hooks
 import { useForm } from "react-hook-form"
-import { useNavigation } from '@react-navigation/native';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 // components
 import AppText from '../../../components/Common/AppText';
@@ -25,11 +25,10 @@ import styles from './styles';
 
 // types
 import { LoginFormValues } from './types';
-import { AuthScreensPropTypes } from '../../../navigation';
+import { AuthScreensPropTypes } from '../../../navigation/types';
 
 // Misc
 import { loginFormSchema } from '../../../schema/validationSchema';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const hookFormParams = {
   defaultValues: {
@@ -41,7 +40,7 @@ const hookFormParams = {
 };
 
 const LoginScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<AuthScreensPropTypes>>();
+  const navigation = useNavigation<NavigationProp<AuthScreensPropTypes>>();
   
   const form = useForm<LoginFormValues>(hookFormParams)
   
