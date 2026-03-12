@@ -17,6 +17,7 @@ end
 target 'SentinelKey' do
   config = use_native_modules!
 
+  use_frameworks! :linkage => :static
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
@@ -30,5 +31,139 @@ target 'SentinelKey' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # Allow non-modular headers (e.g. RCTConvert) inside framework modules (RNFBApp)
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+    end
+
+    # RNFBFirestore: import React before RNFBApp so RCTBridgeModule is from React module (fixes "must be imported from module" error)
+    firestore_header = File.join(__dir__, '../node_modules/@react-native-firebase/firestore/ios/RNFBFirestore/RNFBFirestoreModule.h')
+    if File.exist?(firestore_header)
+      content = File.read(firestore_header)
+      if content.include?('#import <RNFBApp/RNFBSharedUtils.h>') && content.index('#import <RNFBApp/RNFBSharedUtils.h>') < content.index('#import <React/RCTBridgeModule.h>')
+        new_content = content.sub(
+          "#import <Foundation/Foundation.h>\n#import <RNFBApp/RNFBSharedUtils.h>\n#import <React/RCTBridgeModule.h>",
+          "#import <Foundation/Foundation.h>\n#import <React/RCTBridgeModule.h>\n#import <RNFBApp/RNFBSharedUtils.h>"
+        )
+        File.write(firestore_header, new_content)
+        Pod::UI.puts "RNFBFirestore: reordered imports in RNFBFirestoreModule.h (React before RNFBApp)".yellow
+      end
+    end
+
+    # RNFBFirestoreDocumentModule: import React before RNFBApp in header
+    doc_header = File.join(__dir__, '../node_modules/@react-native-firebase/firestore/ios/RNFBFirestore/RNFBFirestoreDocumentModule.h')
+    if File.exist?(doc_header)
+      content = File.read(doc_header)
+      old_h = "#import <Foundation/Foundation.h>\n#import <RNFBApp/RNFBSharedUtils.h>\n#import <React/RCTBridgeModule.h>"
+      new_h = "#import <Foundation/Foundation.h>\n#import <React/RCTBridgeModule.h>\n#import <RNFBApp/RNFBSharedUtils.h>"
+      if content.include?(old_h)
+        File.write(doc_header, content.sub(old_h, new_h))
+        Pod::UI.puts "RNFBFirestore: reordered imports in RNFBFirestoreDocumentModule.h (React before RNFBApp)".yellow
+      end
+    end
+
+    # RNFBFirestoreDocumentModule.m: include header before RNFBApp
+    doc_m = File.join(__dir__, '../node_modules/@react-native-firebase/firestore/ios/RNFBFirestore/RNFBFirestoreDocumentModule.m')
+    if File.exist?(doc_m)
+      content = File.read(doc_m)
+      old_m = %q(#import <RNFBApp/RNFBRCTEventEmitter.h>
+#import <React/RCTUtils.h>
+
+#import "RNFBFirestoreDocumentModule.h")
+      new_m = %q(#import <React/RCTUtils.h>
+#import "RNFBFirestoreDocumentModule.h"
+#import <RNFBApp/RNFBRCTEventEmitter.h>)
+      if content.include?(old_m)
+        File.write(doc_m, content.sub(old_m, new_m))
+        Pod::UI.puts "RNFBFirestore: reordered imports in RNFBFirestoreDocumentModule.m (header before RNFBApp)".yellow
+      end
+    end
+
+    # RNFBFirestoreCollectionModule: import React before RNFBApp in header
+    coll_header = File.join(__dir__, '../node_modules/@react-native-firebase/firestore/ios/RNFBFirestore/RNFBFirestoreCollectionModule.h')
+    if File.exist?(coll_header)
+      content = File.read(coll_header)
+      old_h = "#import <Foundation/Foundation.h>\n#import <RNFBApp/RNFBSharedUtils.h>\n#import <RNFBFirestoreQuery.h>\n#import <React/RCTBridgeModule.h>"
+      new_h = "#import <Foundation/Foundation.h>\n#import <React/RCTBridgeModule.h>\n#import <RNFBApp/RNFBSharedUtils.h>\n#import <RNFBFirestoreQuery.h>"
+      if content.include?(old_h)
+        File.write(coll_header, content.sub(old_h, new_h))
+        Pod::UI.puts "RNFBFirestore: reordered imports in RNFBFirestoreCollectionModule.h (React before RNFBApp)".yellow
+      end
+    end
+
+    # RNFBFirestoreCollectionModule.m: include header before RNFBApp
+    coll_m = File.join(__dir__, '../node_modules/@react-native-firebase/firestore/ios/RNFBFirestore/RNFBFirestoreCollectionModule.m')
+    if File.exist?(coll_m)
+      content = File.read(coll_m)
+      old_m = %q(#import <RNFBApp/RNFBRCTEventEmitter.h>
+#import <React/RCTUtils.h>
+
+#import "RNFBFirestoreCollectionModule.h")
+      new_m = %q(#import <React/RCTUtils.h>
+#import "RNFBFirestoreCollectionModule.h"
+#import <RNFBApp/RNFBRCTEventEmitter.h>)
+      if content.include?(old_m)
+        File.write(coll_m, content.sub(old_m, new_m))
+        Pod::UI.puts "RNFBFirestore: reordered imports in RNFBFirestoreCollectionModule.m (header before RNFBApp)".yellow
+      end
+    end
+
+    # RNFBFirestoreTransactionModule: import React before RNFBApp in header
+    transaction_header = File.join(__dir__, '../node_modules/@react-native-firebase/firestore/ios/RNFBFirestore/RNFBFirestoreTransactionModule.h')
+    if File.exist?(transaction_header)
+      content = File.read(transaction_header)
+      old_h = "#import <Foundation/Foundation.h>\n#import <RNFBApp/RNFBSharedUtils.h>\n#import <RNFBFirestoreQuery.h>\n#import <React/RCTBridgeModule.h>"
+      new_h = "#import <Foundation/Foundation.h>\n#import <React/RCTBridgeModule.h>\n#import <RNFBApp/RNFBSharedUtils.h>\n#import <RNFBFirestoreQuery.h>"
+      if content.include?(old_h)
+        File.write(transaction_header, content.sub(old_h, new_h))
+        Pod::UI.puts "RNFBFirestore: reordered imports in RNFBFirestoreTransactionModule.h (React before RNFBApp)".yellow
+      end
+    end
+
+    # RNFBFirestoreTransactionModule.m: include header before RNFBApp
+    transaction_m = File.join(__dir__, '../node_modules/@react-native-firebase/firestore/ios/RNFBFirestore/RNFBFirestoreTransactionModule.m')
+    if File.exist?(transaction_m)
+      content = File.read(transaction_m)
+      old_m = %q(#import <RNFBApp/RNFBRCTEventEmitter.h>
+#import <React/RCTUtils.h>
+
+#import "RNFBFirestoreTransactionModule.h")
+      new_m = %q(#import <React/RCTUtils.h>
+#import "RNFBFirestoreTransactionModule.h"
+#import <RNFBApp/RNFBRCTEventEmitter.h>)
+      if content.include?(old_m)
+        File.write(transaction_m, content.sub(old_m, new_m))
+        Pod::UI.puts "RNFBFirestore: reordered imports in RNFBFirestoreTransactionModule.m (header before RNFBApp)".yellow
+      end
+    end
+
+    # RNFBCrashlytics: include module header (React) before RNFBApp so RCTBridgeModule is from React module
+    crashlytics_m = File.join(__dir__, '../node_modules/@react-native-firebase/crashlytics/ios/RNFBCrashlytics/RNFBCrashlyticsModule.m')
+    if File.exist?(crashlytics_m)
+      content = File.read(crashlytics_m)
+      old_block = %q(#import <React/RCTConvert.h>
+#import <React/RCTLog.h>
+#import <React/RCTUtils.h>
+
+#import <Firebase/Firebase.h>
+#import "RNFBApp/RNFBSharedUtils.h"
+#import "RNFBCrashlyticsInitProvider.h"
+#import "RNFBCrashlyticsModule.h"
+#import "RNFBPreferences.h")
+      new_block = %q(#import <React/RCTConvert.h>
+#import <React/RCTLog.h>
+#import <React/RCTUtils.h>
+#import "RNFBCrashlyticsModule.h"
+
+#import <Firebase/Firebase.h>
+#import "RNFBApp/RNFBSharedUtils.h"
+#import "RNFBCrashlyticsInitProvider.h"
+#import "RNFBPreferences.h")
+      if content.include?(old_block)
+        new_content = content.sub(old_block, new_block)
+        File.write(crashlytics_m, new_content)
+        Pod::UI.puts "RNFBCrashlytics: reordered imports in RNFBCrashlyticsModule.m (header before RNFBApp)".yellow
+      end
+    end
   end
 end

@@ -10,6 +10,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import Icon from '@react-native-vector-icons/feather';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { createUserWithEmailAndPassword, getAuth } from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { useDispatch } from 'react-redux';
+import { Alert } from 'react-native';
+import { setData } from '../../../store/slices/authSlice';
 
 // hooks
 import { useForm } from 'react-hook-form';
@@ -33,23 +38,78 @@ import { AuthScreensPropTypes } from '../../../navigation/types';
 
 const hookFormParams = {
   defaultValues: {
+    fullName: "",
     email: "",
+    phoneNumber: "",
     password: "",
     confirmPassword: "",
-    termsAndConditionsAccepted: false,
+    termsAndConditionsAccepted: false
   },
   resolver: yupResolver(signUpFormSchema)
 };
 
 const SignUpScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthScreensPropTypes>>();
+  const dispatch = useDispatch();
 
   const [agreed, setAgreed] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<SignupFormValues>(hookFormParams)
 
-  const onValidFormSubmission = (validFormData: unknown) => {
-    console.log('validFormData :: ', validFormData)
+  const onValidFormSubmission = async (validFormData: SignupFormValues) => {
+    if (!agreed) {
+      Alert.alert('Error', 'Please agree to the Terms of Service and Privacy Policy.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { email, password, fullName, phoneNumber } = validFormData;
+
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(getAuth(), email, password);
+      const { uid } = userCredential.user;
+
+      const userData = {
+        uid,
+        fullName,
+        email,
+        phoneNumber,
+        createdAt: new Date().toISOString(),
+        isAccountVerified: userCredential.user.emailVerified,
+      };
+
+      // 2. Save user data to Firestore
+      await firestore().collection('users').doc(uid).set(userData);
+
+      const actionCodeSettings = {
+          handleCodeInApp: true,
+          url: 'https://sentinel-key.firebaseapp.com/verified',
+          iOS: { bundleId: 'com.sentinelkey' },
+          android: { packageName: 'com.sentinelkey', installApp: false },
+      };
+      await userCredential.user.sendEmailVerification(actionCodeSettings);
+
+      // 3. Update Redux store
+      dispatch(setData(userData));
+
+      Alert.alert('Success', 'Account created successfully and account verification link sent to the registered email address Open the link in the email to verify—it will open this app.');
+      // Navigation will likely be handled by an auth listener in the root navigator, 
+      // but if not, we could navigate here.
+    } catch (error: any) {
+      setLoading(false);
+      console.error('Signup Error:', error);
+      let errorMessage = 'An error occurred during signup.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'That email address is already in use!';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'That email address is invalid!';
+      }
+      Alert.alert('Signup Failed', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const onInvalidFormSubmission = (invalidFormData: unknown) => {
@@ -65,7 +125,7 @@ const SignUpScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        
+
         {/* Header */}
         <View style={styles.header}>
           <Pressable
@@ -92,6 +152,24 @@ const SignUpScreen = () => {
           {"Join Sentinel Key and protect your identity."}
         </AppText>
 
+        {/* Full Name */}
+        <AppText style={styles.label}>{"Full Name"}</AppText>
+        <ValidationController
+          control={form.control}
+          name={'fullName'}
+        >
+          <AppInput
+            leftIcon={
+              <Icon name="user" size={18} color={colors.mutedBlueGray} />
+            }
+            containerStyle={styles.inputContainer}
+            placeholder="Enter Full Name"
+            placeholderTextColor={colors.mutedBlueGray}
+            style={styles.input}
+            autoCapitalize="none"
+          />
+        </ValidationController>
+
         {/* Email */}
         <AppText style={styles.label}>{"Email Address"}</AppText>
         <ValidationController
@@ -107,6 +185,25 @@ const SignUpScreen = () => {
             placeholderTextColor={colors.mutedBlueGray}
             style={styles.input}
             keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </ValidationController>
+
+        {/* Phone Number */}
+        <AppText style={styles.label}>{"Phone Number"}</AppText>
+        <ValidationController
+          control={form.control}
+          name={'phoneNumber'}
+        >
+          <AppInput
+            leftIcon={
+              <Icon name="mail" size={18} color={colors.mutedBlueGray} />
+            }
+            containerStyle={styles.inputContainer}
+            placeholder="+91 1234567890"
+            placeholderTextColor={colors.mutedBlueGray}
+            style={styles.input}
+            keyboardType="number-pad"
             autoCapitalize="none"
           />
         </ValidationController>
@@ -170,9 +267,12 @@ const SignUpScreen = () => {
         {/* Button */}
         <TouchableOpacity
           onPress={form.handleSubmit(onValidFormSubmission, onInvalidFormSubmission)}
-          style={styles.button}
+          style={[styles.button, loading && { opacity: 0.7 }]}
+          disabled={loading}
         >
-          <AppText style={styles.buttonText}>{"Create Account"}</AppText>
+          <AppText style={styles.buttonText}>
+            {loading ? "Creating Account..." : "Create Account"}
+          </AppText>
         </TouchableOpacity>
 
         {/* Footer */}

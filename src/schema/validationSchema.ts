@@ -7,10 +7,12 @@ export const loginFormSchema = yup.object({
 }).required();
 
 export const signUpFormSchema = yup.object({
+  fullName: yup.string().required(),
   email: yup.string().email().required(),
+  phoneNumber: yup.string().required(),
   password: yup.string().min(8).max(15).required(),
   confirmPassword: yup.string().min(8).max(15).required(),
-  termsAndConditionsAccepted: yup.boolean().required()
+  termsAndConditionsAccepted: yup.boolean().required(),
 }).required();
 
 export const addListItemSchema = yup.object({

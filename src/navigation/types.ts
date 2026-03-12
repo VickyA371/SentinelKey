@@ -1,7 +1,10 @@
 export type AuthScreensPropTypes = {
-    Login: undefined
-    Signup: undefined
-    Verification: undefined
+  Login: undefined
+  Signup: undefined
+}
+
+export type PendingVerificationScreensPropTypes = {
+  AccountVerification: undefined
 }
 
 export type AppScreensPropTypes = {

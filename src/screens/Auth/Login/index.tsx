@@ -7,6 +7,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@react-native-vector-icons/feather';
 import { yupResolver } from "@hookform/resolvers/yup"
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { useDispatch } from 'react-redux';
+import { Alert } from 'react-native';
+import { setData } from '../../../store/slices/authSlice';
+import { useState } from 'react';
 
 // hooks
 import { useForm } from "react-hook-form"
@@ -41,11 +47,51 @@ const hookFormParams = {
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp<AuthScreensPropTypes>>();
-  
+  const dispatch = useDispatch();
+
+  const [loading, setLoading] = useState(false);
+
   const form = useForm<LoginFormValues>(hookFormParams)
-  
-  const onValidFormSubmission = (validFormData: unknown) => {
-    console.log('validFormData :: ', validFormData)
+
+  const onValidFormSubmission = async (validFormData: LoginFormValues) => {
+    setLoading(true);
+    try {
+      const { email, password } = validFormData;
+
+      // 1. Sign in with Firebase Auth
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const { uid, emailVerified } = userCredential.user;
+
+      // 2. Fetch user data from Firestore
+      const userDoc = await firestore().collection('users').doc(uid).get();
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as any;
+        // 3. Update Redux store (include email verification so navigator shows correct group)
+        dispatch(setData({
+          uid: userData.uid,
+          fullName: userData.fullName,
+          email: userData.email,
+          phoneNumber: userData.phoneNumber,
+          createdAt: userData.createdAt,
+          isAccountVerified: emailVerified,
+        }));
+        if (emailVerified) {
+          Alert.alert('Success', 'Logged in successfully!');
+        }
+      }
+    } catch (error: any) {
+      console.error('Login Error:', error);
+      let errorMessage = 'An error occurred during login.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'That email address is invalid!';
+      }
+      Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const onInvalidFormSubmission = (invalidFormData: unknown) => {
@@ -102,7 +148,7 @@ const LoginScreen = () => {
         <TextButton
           textStyle={styles.forgot}
           btnText='Forgot Password?'
-          onPress={() => {}}
+          onPress={() => { }}
         />
       </View>
 
@@ -125,10 +171,10 @@ const LoginScreen = () => {
 
       {/* Login Button */}
       <FullWidthButton
-        buttonText="Login"
+        buttonText={loading ? "Logging in..." : "Login"}
         onPress={form.handleSubmit(onValidFormSubmission, onInvalidFormSubmission)}
-        loading={false}
-        disabled={false}
+        loading={loading}
+        disabled={loading}
       />
 
       {/* Footer */}
