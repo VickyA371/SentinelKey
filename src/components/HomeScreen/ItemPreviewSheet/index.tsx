@@ -13,6 +13,7 @@ import colors from "../../../constants/colors";
 
 // types
 import { AppScreensPropTypes } from "../../../navigation/types";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
     item: any;
@@ -20,7 +21,9 @@ interface Props {
 }
 
 const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onClose }, ref) => {
+    const safeAreaInsets = useSafeAreaInsets();
     const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
+    
     const [showPassword, setShowPassword] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
@@ -28,7 +31,6 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         (props: any) => (
             <BottomSheetBackdrop
                 {...props}
-
                 disappearsOnIndex={-1}
             />
         ),
@@ -63,7 +65,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                 enableDismissOnClose
                 enableDynamicSizing
             >
-                <BottomSheetView style={styles.container}>
+                <BottomSheetView style={[styles.container, { paddingBottom: 24 + safeAreaInsets.bottom }]}>
                     <View style={styles.header}>
                         <AppText style={styles.headerTitle}>{item.title}</AppText>
                         <TouchableOpacity onPress={onClose}>

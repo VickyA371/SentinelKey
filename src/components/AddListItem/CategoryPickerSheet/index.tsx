@@ -9,6 +9,7 @@ import AppText from "../../Common/AppText";
 // constants
 import colors from "../../../constants/colors";
 import styles from "./styles";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
     onClose: () => void;
@@ -25,15 +26,13 @@ const CATEGORIES = [
 ];
 
 const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose, onSelect, onAddNew }, ref) => {
-    const snapPoints = useMemo(() => ["50%"], []);
-
+    const safeAreaInsets = useSafeAreaInsets();
+    
     const renderBackdrop = useCallback(
         (props: any) => (
             <BottomSheetBackdrop
                 {...props}
-                opacity={0.5}
-                appearsAtThreshold={0}
-                disappearsAtThreshold={-1}
+                disappearsOnIndex={-1}
             />
         ),
         []
@@ -58,13 +57,14 @@ const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose
     return (
         <BottomSheetModal
             ref={ref}
-            snapPoints={snapPoints}
+            enableDynamicSizing
+            enableDismissOnClose
             backdropComponent={renderBackdrop}
             onDismiss={onClose}
             handleIndicatorStyle={styles.indicator}
             backgroundStyle={styles.background}
         >
-            <BottomSheetView style={styles.container}>
+            <BottomSheetView style={[styles.container, { paddingBottom: 24 + safeAreaInsets.bottom }]}>
                 <View style={styles.header}>
                     <AppText style={styles.title}>Select Category</AppText>
                     <TouchableOpacity onPress={onClose}>

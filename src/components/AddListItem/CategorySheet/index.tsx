@@ -9,6 +9,7 @@ import AppText from "../../Common/AppText";
 // constants
 import colors from "../../../constants/colors";
 import styles from "./styles";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
     onClose: () => void;
@@ -24,17 +25,16 @@ const ICONS = [
 ];
 
 const CategorySheet = React.forwardRef<BottomSheetModal, Props>(({ onClose, onSave }, ref) => {
-    const snapPoints = useMemo(() => ["60%"], []);
     const [categoryName, setCategoryName] = useState("");
     const [selectedIcon, setSelectedIcon] = useState("folder");
+
+    const safeAreaInsets = useSafeAreaInsets();
 
     const renderBackdrop = useCallback(
         (props: any) => (
             <BottomSheetBackdrop
                 {...props}
-                opacity={0.5}
-                appearsAtThreshold={0}
-                disappearsAtThreshold={-1}
+                disappearsOnIndex={-1}
             />
         ),
         []
@@ -51,13 +51,14 @@ const CategorySheet = React.forwardRef<BottomSheetModal, Props>(({ onClose, onSa
     return (
         <BottomSheetModal
             ref={ref}
-            snapPoints={snapPoints}
+            enableDynamicSizing
+            enableDismissOnClose
             backdropComponent={renderBackdrop}
             onDismiss={onClose}
             handleIndicatorStyle={styles.indicator}
             backgroundStyle={styles.background}
         >
-            <BottomSheetView style={styles.container}>
+            <BottomSheetView style={[styles.container, { paddingBottom: 24 + safeAreaInsets.bottom }]}>
                 <View style={styles.header}>
                     <View style={styles.headerTextContainer}>
                         <AppText style={styles.title}>Add Custom Category</AppText>
