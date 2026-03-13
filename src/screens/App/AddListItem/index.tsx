@@ -6,6 +6,7 @@ import Ionicons from "@react-native-vector-icons/ionicons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
 // components
@@ -49,11 +50,13 @@ const AddListItem = () => {
     const onSubmit = async (data: AddListItemFormValues) => {
         try {
             const encryptedPassword = encrypt(data.password);
+            const user = auth().currentUser;
             const payload = {
                 title: data.itemName,
                 category: data.category,
                 username: data.username,
                 password: encryptedPassword,
+                userId: user?.uid, // Added for security rules
             };
 
             if (isEditing && editItem?.id) {

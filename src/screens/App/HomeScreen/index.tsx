@@ -22,6 +22,7 @@ import { AppScreensPropTypes } from "../../../navigation/types";
 // Re-adjusting iconBg for exact match with design if possible
 // VAULT_DATA removed as it is now fetched from Firestore
 
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { getCategoryIcon, getDynamicColor } from "../../../utils/mapping";
 import { COLLECTIONS } from "../../../constants/firebase";
@@ -37,8 +38,10 @@ function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
+    const user = auth().currentUser;
     const subscriber = firestore()
       .collection(COLLECTIONS.PASSWORDS)
+      .where('userId', '==', user?.uid)
       .onSnapshot(querySnapshot => {
         const items = querySnapshot.docs.map(doc => {
           const data = doc.data();
