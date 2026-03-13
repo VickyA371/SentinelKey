@@ -10,8 +10,8 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { useDispatch } from 'react-redux';
-import { Alert } from 'react-native';
 import { setData } from '../../../store/slices/authSlice';
+import { showSuccess, showError } from '../../../utils/toast';
 import { useState } from 'react';
 
 // hooks
@@ -78,7 +78,7 @@ const LoginScreen = () => {
           isAccountVerified: emailVerified,
         }));
         if (emailVerified) {
-          Alert.alert('Success', 'Logged in successfully!');
+          showSuccess('Success', 'Logged in successfully!');
         }
       }
     } catch (error: any) {
@@ -89,7 +89,7 @@ const LoginScreen = () => {
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'That email address is invalid!';
       }
-      Alert.alert('Login Failed', errorMessage);
+      showError('Login Failed', errorMessage);
     } finally {
       setLoading(false);
     }

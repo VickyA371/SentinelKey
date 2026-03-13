@@ -13,8 +13,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { createUserWithEmailAndPassword, getAuth } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { useDispatch } from 'react-redux';
-import { Alert } from 'react-native';
 import { setData } from '../../../store/slices/authSlice';
+import { showSuccess, showError } from '../../../utils/toast';
 
 // hooks
 import { useForm } from 'react-hook-form';
@@ -60,7 +60,7 @@ const SignUpScreen = () => {
 
   const onValidFormSubmission = async (validFormData: SignupFormValues) => {
     if (!agreed) {
-      Alert.alert('Error', 'Please agree to the Terms of Service and Privacy Policy.');
+      showError('Error', 'Please agree to the Terms of Service and Privacy Policy.');
       return;
     }
 
@@ -95,7 +95,7 @@ const SignUpScreen = () => {
       // 3. Update Redux store
       dispatch(setData(userData));
 
-      Alert.alert('Success', 'Account created successfully and account verification link sent to the registered email address Open the link in the email to verify—it will open this app.');
+      showSuccess('Success', 'Account created successfully! Please verify your email.');
       // Navigation will likely be handled by an auth listener in the root navigator, 
       // but if not, we could navigate here.
     } catch (error: any) {
@@ -107,7 +107,7 @@ const SignUpScreen = () => {
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'That email address is invalid!';
       }
-      Alert.alert('Signup Failed', errorMessage);
+      showError('Signup Failed', errorMessage);
     } finally {
       setLoading(false);
     }

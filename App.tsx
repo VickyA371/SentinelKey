@@ -12,6 +12,8 @@ import AppContent from "./src/navigation";
 import { Provider } from 'react-redux'
 import { store } from "./src/store";
 
+import Toast from 'react-native-toast-message';
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -37,6 +39,7 @@ function App() {
           </SafeAreaProvider>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
+      <Toast />
     </Provider>
   );
 }

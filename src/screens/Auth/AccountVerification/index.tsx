@@ -4,6 +4,7 @@ import {
     StyleSheet,
     Alert,
 } from 'react-native';
+import { showSuccess, showError, showInfo } from '../../../utils/toast';
 import Icon from '@react-native-vector-icons/feather';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
@@ -38,10 +39,10 @@ const AccountVerification = () => {
                 android: { packageName: 'com.sentinelkey', installApp: false },
             };
             await user.sendEmailVerification(actionCodeSettings);
-            Alert.alert('Email sent', 'Verification email sent. Open the link in the email to verify—it will open this app.');
+            showSuccess('Email sent', 'Verification email sent. Open the link in the email to verify.');
         } catch (error: any) {
             console.error('Resend verification error:', error);
-            Alert.alert('Error', error?.message ?? 'Failed to send verification email.');
+            showError('Error', error?.message ?? 'Failed to send verification email.');
         } finally {
             setResendLoading(false);
         }
@@ -68,13 +69,13 @@ const AccountVerification = () => {
                 }));
             }
             if (emailVerified) {
-                Alert.alert('Verified', 'Your email has been verified. You can now use the app.');
+                showSuccess('Verified', 'Your email has been verified. You can now use the app.');
             } else {
-                Alert.alert('Not yet', 'Email is not verified yet. Click the link in the email we sent you.');
+                showInfo('Not yet', 'Email is not verified yet. Click the link in the email we sent you.');
             }
         } catch (error: any) {
             console.error('Check status error:', error);
-            Alert.alert('Error', error?.message ?? 'Failed to check verification status.');
+            showError('Error', error?.message ?? 'Failed to check verification status.');
         } finally {
             setCheckingStatus(false);
         }

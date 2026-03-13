@@ -1,5 +1,6 @@
 import React from "react";
-import { View, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
+import { showSuccess, showError } from "../../../utils/toast";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -57,16 +58,19 @@ const AddListItem = () => {
 
             if (isEditing && editItem?.id) {
                 await firestore().collection(COLLECTIONS.PASSWORDS).doc(editItem.id).update(payload);
-                Alert.alert("Success", "Password item updated successfully!");
+                showSuccess('Success', 'Password item updated successfully!');
             } else {
                 const docId = firestore().collection(COLLECTIONS.PASSWORDS).doc().id;
                 await firestore().collection(COLLECTIONS.PASSWORDS).doc(docId).set({ id: docId, ...payload });
-                Alert.alert("Success", "Password item added successfully!");
+                showSuccess('Success', 'Password item added successfully!');
             }
             navigation.goBack();
         } catch (error) {
             console.error(isEditing ? "Error updating password item:" : "Error adding password item:", error);
-            Alert.alert("Error", isEditing ? "Failed to update password item. Please try again." : "Failed to add password item. Please try again.");
+            showError(
+                'Error',
+                isEditing ? "Failed to update password item. Please try again." : "Failed to add password item. Please try again."
+            );
         }
     };
 
