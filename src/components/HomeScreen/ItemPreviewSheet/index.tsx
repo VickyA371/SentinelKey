@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons";
+import firestore from '@react-native-firebase/firestore';
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 
 // components
@@ -10,6 +11,7 @@ import DeleteModal from "../../Common/DeleteModal";
 
 // constants
 import colors from "../../../constants/colors";
+import { COLLECTIONS } from "../../../constants/firebase";
 
 // types
 import { AppScreensPropTypes } from "../../../navigation/types";
@@ -48,10 +50,18 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         setDeleteModalVisible(true);
     };
 
-    const handleConfirmDelete = () => {
-        setDeleteModalVisible(false);
-        onClose();
-        // Placeholder for deletion logic
+    const handleConfirmDelete = async () => {
+        try {
+            setDeleteModalVisible(false);
+            if (item?.id) {
+                await firestore().collection(COLLECTIONS.PASSWORDS).doc(item.id).delete();
+                Alert.alert("Success", "Password item deleted successfully!");
+                onClose();
+            }
+        } catch (error) {
+            console.error("Error deleting password item:", error);
+            Alert.alert("Error", "Failed to delete password item. Please try again.");
+        }
     };
 
     if (!item) return null;
