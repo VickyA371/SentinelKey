@@ -1,10 +1,11 @@
 import React from "react";
-import { View, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
+import firestore from '@react-native-firebase/firestore';
 
 // components
 import AppText from "../../../components/Common/AppText";
@@ -20,6 +21,7 @@ import styles from "./styles";
 import { AddListItemFormValues } from "./types";
 import { addListItemSchema } from "../../../schema/validationSchema";
 import { AppScreensPropTypes } from "../../../navigation/types";
+import { encrypt, decrypt } from "../../../utils/crypto";
 
 const AddListItem = () => {
     const navigation = useNavigation();
@@ -30,22 +32,41 @@ const AddListItem = () => {
     const form = useForm<AddListItemFormValues>({
         defaultValues: {
             itemName: editItem?.title || "",
-            username: editItem?.username || (isEditing ? "streaming_fan@email.com" : ""),
-            password: editItem?.password || (isEditing ? "••••••••••••" : ""),
-            confirmPassword: editItem?.password || (isEditing ? "••••••••••••" : ""),
+            username: editItem?.username || "",
+            password: isEditing && editItem?.password ? decrypt(editItem.password) : "",
+            confirmPassword: isEditing && editItem?.password ? decrypt(editItem.password) : "",
             category: editItem?.category || "",
         },
-        resolver: yupResolver(addListItemSchema)
+        resolver: yupResolver(addListItemSchema),
     });
 
     const handleBack = () => {
         navigation.goBack();
     };
 
-    const onSubmit = (data: AddListItemFormValues) => {
-        console.log("Form Data:", data);
-        // Here you would typically save or update the item
-        navigation.goBack();
+    const onSubmit = async (data: AddListItemFormValues) => {
+        try {
+            const encryptedPassword = encrypt(data.password);
+            const payload = {
+                title: data.itemName,
+                category: data.category,
+                username: data.username,
+                password: encryptedPassword,
+            };
+
+            if (isEditing && editItem?.id) {
+                await firestore().collection('passwords').doc(editItem.id).update(payload);
+                Alert.alert("Success", "Password item updated successfully!");
+            } else {
+                const docId = firestore().collection("passwords").doc().id;
+                await firestore().collection('passwords').doc(docId).set({ id: docId, ...payload });
+                Alert.alert("Success", "Password item added successfully!");
+            }
+            navigation.goBack();
+        } catch (error) {
+            console.error(isEditing ? "Error updating password item:" : "Error adding password item:", error);
+            Alert.alert("Error", isEditing ? "Failed to update password item. Please try again." : "Failed to add password item. Please try again.");
+        }
     };
 
     return (
