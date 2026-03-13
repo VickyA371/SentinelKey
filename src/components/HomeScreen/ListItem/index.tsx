@@ -11,13 +11,12 @@ import colors from "../../../constants/colors";
 interface Props {
     title: string;
     category: string;
-    url: string;
     icon: string;
     iconBg: string;
     onPress?: () => void;
 }
 
-const ListItem: React.FC<Props> = ({ title, category, url, icon, iconBg, onPress }) => {
+const ListItem: React.FC<Props> = ({ title, category, icon, iconBg, onPress }) => {
     return (
         <TouchableOpacity style={styles.container} onPress={onPress}>
             <View style={[styles.iconContainer, { backgroundColor: iconBg }]}>
@@ -25,9 +24,7 @@ const ListItem: React.FC<Props> = ({ title, category, url, icon, iconBg, onPress
             </View>
             <View style={styles.content}>
                 <AppText style={styles.title}>{title}</AppText>
-                <AppText style={styles.subtitle}>
-                    {category} <AppText style={styles.dot}>•</AppText> {url}
-                </AppText>
+                <AppText style={styles.subtitle}>{category}</AppText>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.iceGray} />
         </TouchableOpacity>
@@ -43,6 +40,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
         padding: 16,
         borderRadius: 16,
+        overflow: 'hidden',
         marginBottom: 12,
         // Basic shadow for card effect
         shadowColor: colors.black,

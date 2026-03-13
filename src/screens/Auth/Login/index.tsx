@@ -27,6 +27,7 @@ import ValidationController from '../../../components/Common/ValidationControlle
 
 // constants
 import colors from '../../../constants/colors';
+import { COLLECTIONS } from "../../../constants/firebase";
 import styles from './styles';
 
 // types
@@ -63,7 +64,7 @@ const LoginScreen = () => {
       const { uid, emailVerified } = userCredential.user;
 
       // 2. Fetch user data from Firestore
-      const userDoc = await firestore().collection('users').doc(uid).get();
+      const userDoc = await firestore().collection(COLLECTIONS.USERS).doc(uid).get();
 
       if (userDoc.exists()) {
         const userData = userDoc.data() as any;

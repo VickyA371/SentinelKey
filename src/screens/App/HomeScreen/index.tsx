@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { FlatList, ListRenderItemInfo } from "react-native";
+import { FlatList, ListRenderItemInfo, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
@@ -11,67 +11,51 @@ import CategoryTabs from "../../../components/HomeScreen/CategoryTabs";
 import ListItem from "../../../components/HomeScreen/ListItem";
 import AddButton from "../../../components/HomeScreen/AddButton";
 import ItemPreviewSheet from "../../../components/HomeScreen/ItemPreviewSheet";
+import AppText from "../../../components/Common/AppText";
 
+import colors from "../../../constants/colors";
 import styles from "./styles";
 
 // types
 import { AppScreensPropTypes } from "../../../navigation/types";
 
-const VAULT_DATA = [
-  {
-    id: "1",
-    title: "Google",
-    category: "social",
-    url: "google.com",
-    icon: "logo-google",
-    iconBg: "rgba(255, 0, 0, 0.1)", // Light red background for icon
-  },
-  {
-    id: "2",
-    title: "Chase Bank",
-    category: "finance",
-    url: "chase.com",
-    icon: "business-outline",
-    iconBg: "rgba(0, 0, 255, 0.1)",
-  },
-  {
-    id: "3",
-    title: "Slack",
-    category: "work",
-    url: "slack.com",
-    icon: "chatbubble-outline",
-    iconBg: "rgba(128, 0, 128, 0.1)",
-  },
-  {
-    id: "4",
-    title: "Netflix",
-    category: "personal",
-    url: "netflix.com",
-    icon: "film-outline",
-    iconBg: "rgba(255, 255, 255, 0.1)", // In the design Netflix is dark red
-  },
-  {
-    id: "5",
-    title: "Dropbox",
-    category: "work",
-    url: "dropbox.com",
-    icon: "folder-open-outline",
-    iconBg: "rgba(0, 128, 255, 0.1)",
-  },
-];
-
 // Re-adjusting iconBg for exact match with design if possible
-VAULT_DATA[0].iconBg = "#FFF1F1"; // Google
-VAULT_DATA[1].iconBg = "#F0F4FF"; // Chase
-VAULT_DATA[2].iconBg = "#FBF2FF"; // Slack
-VAULT_DATA[3].iconBg = "#8B1A1A"; // Netflix (dark red as per design image)
-VAULT_DATA[4].iconBg = "#F0F9FF"; // Dropbox
+// VAULT_DATA removed as it is now fetched from Firestore
+
+import firestore from '@react-native-firebase/firestore';
+import { getCategoryIcon, getDynamicColor } from "../../../utils/mapping";
+import { COLLECTIONS } from "../../../constants/firebase";
 
 function HomeScreen() {
   const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
+  const [vaultData, setVaultData] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const subscriber = firestore()
+      .collection(COLLECTIONS.PASSWORDS)
+      .onSnapshot(querySnapshot => {
+        const items = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            ...data,
+            id: doc.id,
+            icon: getCategoryIcon(data.category),
+            iconBg: getDynamicColor(doc.id)
+          };
+        });
+        setVaultData(items);
+        setLoading(false);
+      });
+
+    // Unsubscribe from events when no longer in use
+    return () => subscriber();
+  }, []);
 
   const handlePresentItem = (item: any) => {
     setSelectedItem(item);
@@ -85,7 +69,6 @@ function HomeScreen() {
     <ListItem
       title={item.title}
       category={item.category}
-      url={item.url}
       icon={item.icon}
       iconBg={item.iconBg}
       onPress={() => handlePresentItem(item)}
@@ -94,17 +77,30 @@ function HomeScreen() {
 
   const keyExtractor = (item: any) => item.id;
 
+  const filteredData = vaultData.filter(item => {
+    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <SearchBar value={""} onChange={() => { }} />
-      <CategoryTabs />
+      <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      <CategoryTabs activeCategory={activeCategory} onSelect={setActiveCategory} />
       <FlatList
-        data={VAULT_DATA}
+        data={filteredData}
         keyExtractor={keyExtractor}
         renderItem={renderListItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        ListEmptyComponent={() => (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 100 }}>
+            <AppText style={{ color: colors.mutedBlueGray }}>
+              {loading ? "Loading your vault..." : "No items found"}
+            </AppText>
+          </View>
+        )}
       />
       <AddButton onPress={() => navigation.navigate('AddListItem')} />
       <ItemPreviewSheet

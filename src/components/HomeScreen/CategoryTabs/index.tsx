@@ -9,9 +9,12 @@ import colors from "../../../constants/colors";
 
 const CATEGORIES = ["All", "Social", "Finance", "Work", "Personal"];
 
-const CategoryTabs = () => {
-  const [activeCategory, setActiveCategory] = useState("All");
+interface Props {
+  activeCategory: string;
+  onSelect: (category: string) => void;
+}
 
+const CategoryTabs = ({ activeCategory, onSelect }: Props) => {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -28,7 +31,7 @@ const CategoryTabs = () => {
                 styles.tab,
                 isActive && styles.activeTab,
               ]}
-              onPress={() => setActiveCategory(category)}
+              onPress={() => onSelect(category)}
             >
               <AppText
                 style={[

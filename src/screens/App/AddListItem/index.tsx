@@ -15,6 +15,7 @@ import ValidationController from "../../../components/Common/ValidationControlle
 
 // constants
 import colors from "../../../constants/colors";
+import { COLLECTIONS } from "../../../constants/firebase";
 import styles from "./styles";
 
 // types
@@ -55,11 +56,11 @@ const AddListItem = () => {
             };
 
             if (isEditing && editItem?.id) {
-                await firestore().collection('passwords').doc(editItem.id).update(payload);
+                await firestore().collection(COLLECTIONS.PASSWORDS).doc(editItem.id).update(payload);
                 Alert.alert("Success", "Password item updated successfully!");
             } else {
-                const docId = firestore().collection("passwords").doc().id;
-                await firestore().collection('passwords').doc(docId).set({ id: docId, ...payload });
+                const docId = firestore().collection(COLLECTIONS.PASSWORDS).doc().id;
+                await firestore().collection(COLLECTIONS.PASSWORDS).doc(docId).set({ id: docId, ...payload });
                 Alert.alert("Success", "Password item added successfully!");
             }
             navigation.goBack();

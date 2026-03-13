@@ -17,6 +17,7 @@ import TextButton from '../../../components/Common/TextButton';
 
 // constants
 import colors from '../../../constants/colors';
+import { COLLECTIONS } from '../../../constants/firebase';
 import { setData, clearData } from '../../../store/slices/authSlice';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -54,7 +55,7 @@ const AccountVerification = () => {
             await user.reload();
             const updated = auth().currentUser;
             const emailVerified = updated?.emailVerified ?? false;
-            const userDoc = await firestore().collection('users').doc(updated?.uid ?? '').get();
+            const userDoc = await firestore().collection(COLLECTIONS.USERS).doc(updated?.uid ?? '').get();
             if (userDoc.exists()) {
                 const userData = userDoc.data() as { uid: string; fullName: string; email: string; createdAt: string, phoneNumber: string };
                 dispatch(setData({

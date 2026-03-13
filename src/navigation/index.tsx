@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { COLLECTIONS } from '../constants/firebase';
 import { RootState } from '../store';
 import { setData, clearData } from '../store/slices/authSlice';
 import { View, ActivityIndicator, Linking } from 'react-native';
@@ -96,7 +97,7 @@ async function handleEmailVerificationLink(url: string, dispatch: (action: { pay
       await user.reload();
       const updated = auth().currentUser;
       const emailVerified = updated?.emailVerified ?? false;
-      const userDoc = await firestore().collection('users').doc(updated?.uid ?? '').get();
+      const userDoc = await firestore().collection(COLLECTIONS.USERS).doc(updated?.uid ?? '').get();
       if (userDoc.exists()) {
         const userData = userDoc.data() as { uid: string; fullName: string; email: string; createdAt: string, phoneNumber: string };
         dispatch(setData({
@@ -133,7 +134,7 @@ const RootNavigation = () => {
     const unsubscribe = auth().onAuthStateChanged(async (user: FirebaseAuthTypes.User | null) => {
       if (user) {
         try {
-          const userDoc = await firestore().collection('users').doc(user.uid).get();
+          const userDoc = await firestore().collection(COLLECTIONS.USERS).doc(user.uid).get();
           if (userDoc.exists()) {
             const userData = userDoc.data() as { uid: string; fullName: string; email: string; createdAt: string, phoneNumber: string };
             dispatch(setData({

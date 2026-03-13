@@ -15,6 +15,8 @@ import colors from "../../../constants/colors";
 import { AppScreensPropTypes } from "../../../navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { decrypt } from "../../../utils/crypto";
+
 interface Props {
     item: any;
     onClose: () => void;
@@ -23,7 +25,7 @@ interface Props {
 const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onClose }, ref) => {
     const safeAreaInsets = useSafeAreaInsets();
     const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
-    
+
     const [showPassword, setShowPassword] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
@@ -49,10 +51,12 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     const handleConfirmDelete = () => {
         setDeleteModalVisible(false);
         onClose();
-        // Here we would typically call a deletion service
+        // Placeholder for deletion logic
     };
 
     if (!item) return null;
+
+    const decryptedPassword = item.password ? decrypt(item.password) : "";
 
     return (
         <>
@@ -78,29 +82,29 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                     </View>
 
                     <View style={styles.content}>
-                        <DetailRow label="ITEM NAME" value={item.title} />
                         <DetailRow
                             label="USERNAME"
-                            value="streaming_fan@email.com" // Mocked as per design
+                            value={item.username || "No username"}
                             hasCopy
                         />
                         <DetailRow
                             label="PASSWORD"
-                            value="••••••••••••" // Mocked
+                            value={showPassword ? decryptedPassword : "••••••••••••"}
                             hasVisibility
                             hasCopy
                             onVisibilityToggle={() => setShowPassword(!showPassword)}
                             isPasswordVisible={showPassword}
+                            copyValue={decryptedPassword}
                         />
                         <DetailRow
                             label="CATEGORY"
-                            value="Entertainment" // Mocked
+                            value={item.category || "General"}
                             hasBullet
-                            bulletColor="#6366F1"
+                            bulletColor={item.iconBg || colors.deepTeal}
                         />
                         <DetailRow
                             label="BACKUP CODES FILE"
-                            value="Google_Backup_Codes.pdf"
+                            value="No file uploaded"
                             hasViewIcon
                         />
                     </View>
@@ -138,14 +142,15 @@ const DetailRow = ({
     onVisibilityToggle,
     hasBullet,
     bulletColor,
-    hasViewIcon
+    hasViewIcon,
+    copyValue
 }: any) => (
     <View style={styles.detailRow}>
         <AppText style={styles.detailLabel}>{label}</AppText>
         <View style={styles.detailValueContainer}>
             <View style={styles.valueLeft}>
                 {hasBullet && <View style={[styles.bullet, { backgroundColor: bulletColor }]} />}
-                <AppText style={styles.detailValue}>{isPasswordVisible ? "RealPassword123!" : value}</AppText>
+                <AppText style={styles.detailValue}>{value}</AppText>
             </View>
             <View style={styles.actions}>
                 {hasVisibility && (

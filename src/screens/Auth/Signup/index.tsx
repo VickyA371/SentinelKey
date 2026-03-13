@@ -27,6 +27,7 @@ import ValidationController from '../../../components/Common/ValidationControlle
 
 // constants
 import colors from '../../../constants/colors';
+import { COLLECTIONS } from '../../../constants/firebase';
 
 // types
 import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -81,13 +82,13 @@ const SignUpScreen = () => {
       };
 
       // 2. Save user data to Firestore
-      await firestore().collection('users').doc(uid).set(userData);
+      await firestore().collection(COLLECTIONS.USERS).doc(uid).set(userData);
 
       const actionCodeSettings = {
-          handleCodeInApp: true,
-          url: 'https://sentinel-key.firebaseapp.com/verified',
-          iOS: { bundleId: 'com.sentinelkey' },
-          android: { packageName: 'com.sentinelkey', installApp: false },
+        handleCodeInApp: true,
+        url: 'https://sentinel-key.firebaseapp.com/verified',
+        iOS: { bundleId: 'com.sentinelkey' },
+        android: { packageName: 'com.sentinelkey', installApp: false },
       };
       await userCredential.user.sendEmailVerification(actionCodeSettings);
 
