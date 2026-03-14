@@ -36,12 +36,24 @@ const AddListItem = () => {
         defaultValues: {
             itemName: editItem?.title || "",
             username: editItem?.username || "",
-            password: isEditing && editItem?.password ? decrypt(editItem.password) : "",
-            confirmPassword: isEditing && editItem?.password ? decrypt(editItem.password) : "",
+            password: "",
+            confirmPassword: "",
             category: editItem?.category || "",
         },
         resolver: yupResolver(addListItemSchema),
     });
+
+    React.useEffect(() => {
+        const loadPassword = async () => {
+            const currentUser = auth().currentUser;
+            if (isEditing && editItem?.password && currentUser?.uid) {
+                const decrypted = await decrypt(editItem.password, currentUser.uid);
+                form.setValue("password", decrypted);
+                form.setValue("confirmPassword", decrypted);
+            }
+        };
+        loadPassword();
+    }, [isEditing, editItem, form]);
 
     const handleBack = () => {
         navigation.goBack();
@@ -49,14 +61,16 @@ const AddListItem = () => {
 
     const onSubmit = async (data: AddListItemFormValues) => {
         try {
-            const encryptedPassword = encrypt(data.password);
             const user = auth().currentUser;
+            if (!user?.uid) throw new Error("User not authenticated");
+
+            const encryptedPassword = await encrypt(data.password, user.uid);
             const payload = {
                 title: data.itemName,
                 category: data.category,
                 username: data.username,
                 password: encryptedPassword,
-                userId: user?.uid, // Added for security rules
+                userId: user.uid, // Added for security rules
             };
 
             if (isEditing && editItem?.id) {

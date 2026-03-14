@@ -87,7 +87,7 @@ function parseOobCodeFromUrl(url: string): string | null {
   }
 }
 
-async function handleEmailVerificationLink(url: string, dispatch: (action: { payload: unknown }) => void) {
+async function handleEmailVerificationLink(url: string, dispatch: any) {
   const oobCode = parseOobCodeFromUrl(url);
   if (!oobCode) return;
   try {

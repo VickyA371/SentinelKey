@@ -9,6 +9,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 // components
 import AppText from "../../Common/AppText";
 import DeleteModal from "../../Common/DeleteModal";
+import auth from '@react-native-firebase/auth';
 
 // constants
 import colors from "../../../constants/colors";
@@ -31,6 +32,20 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
 
     const [showPassword, setShowPassword] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [decryptedPassword, setDecryptedPassword] = useState("");
+
+    React.useEffect(() => {
+        const fetchDecryptedPassword = async () => {
+            const currentUser = auth().currentUser;
+            if (item?.password && currentUser?.uid) {
+                const decrypted = await decrypt(item.password, currentUser.uid);
+                setDecryptedPassword(decrypted);
+            } else {
+                setDecryptedPassword("");
+            }
+        };
+        fetchDecryptedPassword();
+    }, [item?.password]);
 
     const renderBackdrop = useCallback(
         (props: any) => (
@@ -66,8 +81,6 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     };
 
     if (!item) return null;
-
-    const decryptedPassword = item.password ? decrypt(item.password) : "";
 
     return (
         <>
