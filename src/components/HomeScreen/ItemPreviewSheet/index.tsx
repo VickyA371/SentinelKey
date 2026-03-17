@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { showSuccess, showError } from "../../../utils/toast";
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons";
@@ -20,6 +20,7 @@ import { AppScreensPropTypes } from "../../../navigation/types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { decrypt } from "../../../utils/crypto";
+import Clipboard from '@react-native-clipboard/clipboard';
 
 interface Props {
     item: any;
@@ -46,6 +47,12 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         };
         fetchDecryptedPassword();
     }, [item?.password]);
+
+    const handleCopy = (textToCopy: string, label: string) => {
+        if (!textToCopy) return;
+        Clipboard.setString(textToCopy);
+        showSuccess('Copied', `${label} copied to clipboard`);
+    };
 
     const renderBackdrop = useCallback(
         (props: any) => (
@@ -110,6 +117,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                             label="USERNAME"
                             value={item.username || "No username"}
                             hasCopy
+                            onCopy={() => handleCopy(item.username, "Username")}
                         />
                         <DetailRow
                             label="PASSWORD"
@@ -118,7 +126,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                             hasCopy
                             onVisibilityToggle={() => setShowPassword(!showPassword)}
                             isPasswordVisible={showPassword}
-                            copyValue={decryptedPassword}
+                            onCopy={() => handleCopy(decryptedPassword, "Password")}
                         />
                         <DetailRow
                             label="CATEGORY"
@@ -167,7 +175,7 @@ const DetailRow = ({
     hasBullet,
     bulletColor,
     hasViewIcon,
-    copyValue
+    onCopy
 }: any) => (
     <View style={styles.detailRow}>
         <AppText style={styles.detailLabel}>{label}</AppText>
@@ -183,7 +191,7 @@ const DetailRow = ({
                     </TouchableOpacity>
                 )}
                 {hasCopy && (
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity style={styles.actionButton} onPress={onCopy}>
                         <Ionicons name="copy-outline" size={20} color={colors.mutedBlueGray} />
                     </TouchableOpacity>
                 )}
