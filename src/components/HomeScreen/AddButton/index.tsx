@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // constants
 import colors from "../../../constants/colors";
@@ -10,9 +11,16 @@ interface Props {
 }
 
 const AddButton: React.FC<Props> = ({ onPress }) => {
+    const safeAreaInsets = useSafeAreaInsets();
+
     return (
         <TouchableOpacity
-            style={styles.container}
+            style={[
+                styles.container,
+                {
+                    bottom: safeAreaInsets.bottom ? safeAreaInsets.bottom + 24 : 24,
+                }
+            ]}
             activeOpacity={0.8}
             onPress={onPress}
         >
