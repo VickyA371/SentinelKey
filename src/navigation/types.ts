@@ -10,4 +10,7 @@ export type PendingVerificationScreensPropTypes = {
 export type AppScreensPropTypes = {
     Home: undefined
     AddListItem?: { item: any }
+    Settings: undefined
+    SecuritySettings: undefined
+    ProfileDetails: undefined
 }

@@ -22,3 +22,8 @@ export const addListItemSchema = yup.object({
   confirmPassword: yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm password is required'),
   category: yup.string().required('Category is required'),
 }).required();
+
+export const profileDetailsSchema = yup.object({
+  fullName: yup.string().required('Full Name is required'),
+  phoneNumber: yup.string().required('Phone Number is required'),
+}).required();

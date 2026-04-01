@@ -1,8 +1,8 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { useDispatch } from "react-redux";
-import { getAuth, signOut } from '@react-native-firebase/auth'
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { AppScreensPropTypes } from "../../../navigation/types";
 
 // components
 import AppText from "../../Common/AppText";
@@ -10,20 +10,14 @@ import AppText from "../../Common/AppText";
 // constants
 import colors from "../../../constants/colors";
 
-// redux
-import { clearData } from "../../../store/slices/authSlice";
+
 
 const Header = () => {
-  const dispatch = useDispatch();
+  const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
 
-  const logoutHandler = async () => {
-    try {
-      await signOut(getAuth())
-      dispatch(clearData())
-    } catch (_: unknown) {
-      dispatch(clearData())
-    }
-  }
+  const navigateToSettings = () => {
+    navigation.navigate("Settings");
+  };
 
   return (
     <View style={styles.container}>
@@ -37,7 +31,7 @@ const Header = () => {
         </View>
         <AppText style={styles.title}>{"Sentinel Key"}</AppText>
       </View>
-      <TouchableOpacity onPress={logoutHandler}>
+      <TouchableOpacity onPress={navigateToSettings}>
         <Ionicons 
           name="person-circle-outline"
           size={28}

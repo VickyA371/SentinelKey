@@ -18,6 +18,9 @@ import AccountVerification from '../screens/Auth/AccountVerification';
 // app screens
 import HomeScreen from '../screens/App/HomeScreen';
 import AddListItem from '../screens/App/AddListItem';
+import SettingsScreen from '../screens/App/SettingsScreen';
+import SecuritySettingsScreen from '../screens/App/SecuritySettings';
+import ProfileDetailsScreen from '../screens/App/ProfileDetailsScreen';
 
 // Redux-connected hooks for navigation logic
 const useIsLoggedIn = () => {
@@ -47,6 +50,9 @@ const RootStack = createNativeStackNavigator({
         AddListItem: {
           screen: AddListItem,
         },
+        Settings: SettingsScreen,
+        SecuritySettings: SecuritySettingsScreen,
+        ProfileDetails: ProfileDetailsScreen,
       },
     },
     PendingVerification: {
