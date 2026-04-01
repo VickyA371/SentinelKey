@@ -6,7 +6,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.offWhiteBlueGray,
     paddingHorizontal: 20,
+  },
+  contentContainer: {
+    flex: 1,
     justifyContent: 'center',
+    paddingBottom: 60, // visual balance
   },
   label: {
     fontSize: 14,
@@ -32,31 +36,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.charcoal,
   },
-  passwordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  forgot: {
-    color: colors.deepTeal,
-    fontSize: 13,
-  },
-  biometricButton: {
-    marginTop: 15,
-    borderWidth: 1,
-    borderColor: colors.iceGray,
-    height: 50,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    backgroundColor: colors.white,
-  },
-  biometricText: {
-    color: colors.deepTeal,
-    fontSize: 15,
-    fontWeight: '500',
-  },
   footer: {
     marginTop: 25,
     alignItems: 'center',
@@ -65,7 +44,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.mutedTeal,
   },
-  createAccount: {
+  loginText: {
     color: colors.deepTeal,
     fontWeight: '600',
   },

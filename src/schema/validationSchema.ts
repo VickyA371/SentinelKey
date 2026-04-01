@@ -6,6 +6,10 @@ export const loginFormSchema = yup.object({
   isPasswordVisible: yup.boolean().required()
 }).required();
 
+export const forgotPasswordSchema = yup.object({
+  email: yup.string().email('Please enter a valid email.').required('Email is required'),
+}).required();
+
 export const signUpFormSchema = yup.object({
   fullName: yup.string().required(),
   email: yup.string().email().required(),

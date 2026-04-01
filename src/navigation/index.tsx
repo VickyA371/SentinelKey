@@ -14,6 +14,7 @@ import colors from '../constants/colors';
 import LoginScreen from '../screens/Auth/Login';
 import SignUpScreen from '../screens/Auth/Signup';
 import AccountVerification from '../screens/Auth/AccountVerification';
+import ForgotPasswordScreen from '../screens/Auth/ForgotPassword';
 
 // app screens
 import HomeScreen from '../screens/App/HomeScreen';
@@ -72,6 +73,7 @@ const RootStack = createNativeStackNavigator({
       screens: {
         Login: LoginScreen,
         Signup: SignUpScreen,
+        ForgotPassword: ForgotPasswordScreen,
       },
     },
   },

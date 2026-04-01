@@ -56,7 +56,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
       {rightContent ? (
         rightContent
-      ) : showBackButton && !leftContent && title ? (
+      ) : title ? (
         <View style={styles.spacer} />
       ) : null}
     </View>

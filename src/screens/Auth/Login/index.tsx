@@ -22,6 +22,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import AppText from '../../../components/Common/AppText';
 import AppInput from '../../../components/Common/AppInput';
 import TextButton from '../../../components/Common/TextButton';
+import AuthHeader from '../../../components/Common/AuthHeader';
 import FullWidthButton from '../../../components/Common/FullWidthButton';
 import ValidationController from '../../../components/Common/ValidationController';
 
@@ -107,22 +108,10 @@ const LoginScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Logo Section */}
-      <View style={styles.logoContainer}>
-        <View style={styles.logoIcon}>
-          <Icon name="key" size={24} color={colors.white} />
-        </View>
-        <AppText style={styles.appTitle}>{"Sentinel Key"}</AppText>
-      </View>
-
-      {/* Welcome Card */}
-      <View style={styles.card}>
-        <Icon name="lock" size={50} color={colors.mutedBlueGray} />
-        <AppText style={styles.welcomeText}>{"Welcome Back"}</AppText>
-        <AppText style={styles.subtitle}>
-          {"Access your encrypted vault securely"}
-        </AppText>
-      </View>
+      <AuthHeader
+        title="Welcome Back"
+        subtitle="Access your encrypted vault securely"
+      />
 
       {/* Email */}
       <AppText style={styles.label}>{"Email Address"}</AppText>
@@ -149,7 +138,7 @@ const LoginScreen = () => {
         <TextButton
           textStyle={styles.forgot}
           btnText='Forgot Password?'
-          onPress={() => { }}
+          onPress={() => navigation.navigate('ForgotPassword')}
         />
       </View>
 

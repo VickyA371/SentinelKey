@@ -1,6 +1,7 @@
 export type AuthScreensPropTypes = {
   Login: undefined
   Signup: undefined
+  ForgotPassword: undefined
 }
 
 export type PendingVerificationScreensPropTypes = {

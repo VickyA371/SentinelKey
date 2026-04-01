@@ -16,14 +16,16 @@ import { useDispatch } from 'react-redux';
 import { setData } from '../../../store/slices/authSlice';
 import { showSuccess, showError } from '../../../utils/toast';
 
-// hooks
-import { useForm } from 'react-hook-form';
-import { useNavigation } from '@react-navigation/native';
-
 // components
 import AppText from '../../../components/Common/AppText';
 import AppInput from '../../../components/Common/AppInput';
 import ValidationController from '../../../components/Common/ValidationController';
+import AppHeader from '../../../components/Common/AppHeader';
+import AuthHeader from '../../../components/Common/AuthHeader';
+
+// hooks
+import { useForm } from 'react-hook-form';
+import { useNavigation } from '@react-navigation/native';
 
 // constants
 import colors from '../../../constants/colors';
@@ -125,33 +127,18 @@ const SignUpScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <AppHeader
+        title="Sentinel Key"
+        showBackButton={true}
+        onBackPress={goToLoginScreen}
+        containerStyle={{ paddingHorizontal: 20, marginBottom: 10 }}
+        titleStyle={{ fontSize: 18, fontWeight: '600' }}
+      />
       <ScrollView contentContainerStyle={styles.content}>
-
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable
-            onPress={goToLoginScreen}
-            style={styles.backBtn}
-          >
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color={colors.deepTeal}
-            />
-          </Pressable>
-          <AppText style={styles.headerTitle}>{"Sentinel Key"}</AppText>
-        </View>
-
-        {/* Icon */}
-        <View style={styles.iconWrapper}>
-          <Ionicons name="shield-checkmark-outline" size={40} color={colors.deepTeal} />
-        </View>
-
-        {/* Title */}
-        <AppText style={styles.title}>{"Secure Your Digital Life"}</AppText>
-        <AppText style={styles.subtitle}>
-          {"Join Sentinel Key and protect your identity."}
-        </AppText>
+        <AuthHeader
+          title="Secure Your Digital Life"
+          subtitle="Join Sentinel Key and protect your identity."
+        />
 
         {/* Full Name */}
         <AppText style={styles.label}>{"Full Name"}</AppText>
@@ -298,41 +285,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  backBtn: {
-    padding: 5,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.deepTeal,
-    marginRight: 24,
-  },
-  iconWrapper: {
-    alignSelf: 'center',
-    backgroundColor: colors.lightCyanBlue,
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: colors.charcoal,
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: colors.mutedBlueGray,
-    marginTop: 8,
-    marginBottom: 30,
   },
   label: {
     fontSize: 14,
