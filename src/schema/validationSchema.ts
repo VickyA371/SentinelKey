@@ -1,22 +1,42 @@
 import * as yup from "yup"
 
 export const loginFormSchema = yup.object({
-  email: yup.string().email().required(),
-  password: yup.string().min(8).max(15).required(),
+  email: yup.string()
+    .email('Please enter a valid email address')
+    .required('Email is required'),
+  password: yup.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(15, 'Password must be at most 15 characters')
+    .required('Password is required'),
   isPasswordVisible: yup.boolean().required()
 }).required();
 
 export const forgotPasswordSchema = yup.object({
-  email: yup.string().email('Please enter a valid email.').required('Email is required'),
+  email: yup.string().email('Please enter a valid email address').required('Email is required'),
 }).required();
 
 export const signUpFormSchema = yup.object({
-  fullName: yup.string().required(),
-  email: yup.string().email().required(),
-  phoneNumber: yup.string().required(),
-  password: yup.string().min(8).max(15).required(),
-  confirmPassword: yup.string().min(8).max(15).required(),
-  termsAndConditionsAccepted: yup.boolean().required(),
+  fullName: yup.string()
+    .min(2, 'Full name must be at least 2 characters')
+    .required('Full name is required'),
+  email: yup.string()
+    .email('Please enter a valid email address')
+    .required('Email is required'),
+  phoneNumber: yup.string()
+    .min(10, 'Phone number must be at least 10 digits')
+    .required('Phone number is required'),
+  password: yup.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(15, 'Password must be at most 15 characters')
+    .required('Password is required'),
+  confirmPassword: yup.string()
+    .oneOf([yup.ref('password')], 'Passwords must match')
+    .min(8, 'Password must be at least 8 characters')
+    .max(15, 'Password must be at most 15 characters')
+    .required('Confirm password is required'),
+  termsAndConditionsAccepted: yup.boolean()
+    .oneOf([true], 'You must accept the terms and conditions')
+    .required('You must accept the terms and conditions'),
 }).required();
 
 export const addListItemSchema = yup.object({
