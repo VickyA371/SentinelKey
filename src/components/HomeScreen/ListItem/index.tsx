@@ -40,14 +40,15 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
         padding: 16,
         borderRadius: 16,
-        overflow: 'hidden',
         marginBottom: 12,
-        // Basic shadow for card effect
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: colors.iceGray + '20',
+        // Enhanced card shadow
+        shadowColor: colors.deepTeal,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 1,
     },
     iconContainer: {
         width: 48,
