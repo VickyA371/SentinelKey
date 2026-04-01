@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useNavigation } from '@react-navigation/native';
+
 import AppText from '../../../components/Common/AppText';
+import AppHeader from '../../../components/Common/AppHeader';
+
 import colors from '../../../constants/colors';
 import styles from './styles';
 
@@ -16,13 +19,11 @@ const SecuritySettingsScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.charcoal} />
-        </TouchableOpacity>
-        <AppText style={styles.headerTitle}>{"Security Settings"}</AppText>
-        <View style={styles.headerSpacer} />
-      </View>
+      <AppHeader
+        title="Security Settings"
+        containerStyle={styles.header}
+        titleStyle={styles.headerTitle}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
@@ -37,7 +38,7 @@ const SecuritySettingsScreen = () => {
         {/* Security Features List */}
         <View style={styles.sectionContainer}>
           <AppText style={styles.sectionTitle}>{"Security Features"}</AppText>
-          
+
           <View style={styles.featuresList}>
             {/* Fingerprint Card */}
             <View style={styles.featureCard}>
@@ -50,8 +51,8 @@ const SecuritySettingsScreen = () => {
                   <AppText style={styles.featureSubtitle}>{"Require biometric authentication to open the app"}</AppText>
                 </View>
               </View>
-              <Switch 
-                value={fingerprintEnabled} 
+              <Switch
+                value={fingerprintEnabled}
                 onValueChange={setFingerprintEnabled}
                 trackColor={{ false: colors.iceGray, true: colors.deepTeal }}
                 thumbColor={colors.white}
@@ -69,8 +70,8 @@ const SecuritySettingsScreen = () => {
                   <AppText style={styles.featureSubtitle}>{"Require biometric to view or copy passwords"}</AppText>
                 </View>
               </View>
-              <Switch 
-                value={privacyEnabled} 
+              <Switch
+                value={privacyEnabled}
                 onValueChange={setPrivacyEnabled}
                 trackColor={{ false: colors.iceGray, true: colors.deepTeal }}
                 thumbColor={colors.white}

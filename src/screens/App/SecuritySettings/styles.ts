@@ -13,19 +13,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingTop: 12,
   },
-  backButton: {
-    padding: 8,
-    marginLeft: -8,
-  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.charcoal,
     flex: 1,
     marginLeft: 8,
-  },
-  headerSpacer: {
-    width: 40,
   },
   heroSection: {
     padding: 24,

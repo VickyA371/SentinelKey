@@ -14,14 +14,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.offWhiteBlueGray,
   },
-  backButton: {
-    padding: 8,
-    marginRight: 8,
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: colors.deepTeal,
   },
   scrollContent: {
     padding: 24,

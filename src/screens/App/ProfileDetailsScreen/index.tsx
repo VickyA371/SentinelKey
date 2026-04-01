@@ -22,6 +22,7 @@ import { showSuccess, showError } from '../../../utils/toast';
 import AppText from '../../../components/Common/AppText';
 import AppInput from '../../../components/Common/AppInput';
 import ValidationController from '../../../components/Common/ValidationController';
+import AppHeader from '../../../components/Common/AppHeader';
 
 // constants & schemas
 import colors from '../../../constants/colors';
@@ -88,12 +89,11 @@ const ProfileDetailsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={navigation.goBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.deepTeal} />
-        </TouchableOpacity>
-        <AppText style={styles.headerTitle}>{'Profile Details'}</AppText>
-      </View>
+      <AppHeader 
+        title="Profile Details" 
+        containerStyle={styles.header} 
+        titleStyle={styles.headerTitle} 
+      />
       <ScrollView contentContainerStyle={styles.content}>
 
         {/* Icon */}

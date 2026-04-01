@@ -6,6 +6,7 @@ import { AppScreensPropTypes } from "../../../navigation/types";
 
 // components
 import AppText from "../../Common/AppText";
+import AppHeader from "../../Common/AppHeader";
 
 // constants
 import colors from "../../../constants/colors";
@@ -20,25 +21,31 @@ const Header = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.leftContainer}>
-        <View style={styles.iconContainer}>
-            <Ionicons
-              name="shield-checkmark"
-              size={24}
-              color={colors.deepTeal}
-            />
+    <AppHeader
+      containerStyle={styles.container}
+      showBackButton={false}
+      leftContent={
+        <View style={styles.leftContainer}>
+          <View style={styles.iconContainer}>
+              <Ionicons
+                name="shield-checkmark"
+                size={24}
+                color={colors.deepTeal}
+              />
+          </View>
+          <AppText style={styles.title}>{"Sentinel Key"}</AppText>
         </View>
-        <AppText style={styles.title}>{"Sentinel Key"}</AppText>
-      </View>
-      <TouchableOpacity onPress={navigateToSettings}>
-        <Ionicons 
-          name="person-circle-outline"
-          size={28}
-          color={colors.deepTeal}
-        />
-      </TouchableOpacity>
-    </View>
+      }
+      rightContent={
+        <TouchableOpacity onPress={navigateToSettings}>
+          <Ionicons 
+            name="person-circle-outline"
+            size={28}
+            color={colors.deepTeal}
+          />
+        </TouchableOpacity>
+      }
+    />
   );
 };
 

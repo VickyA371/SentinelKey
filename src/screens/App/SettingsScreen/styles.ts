@@ -16,9 +16,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     marginLeft: -4,
   },
-  backButton: {
-    padding: 8,
-  },
   profileSection: {
     alignItems: 'center',
     marginBottom: 48,

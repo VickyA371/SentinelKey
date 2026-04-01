@@ -11,6 +11,7 @@ import firestore from '@react-native-firebase/firestore';
 
 // components
 import AppText from "../../../components/Common/AppText";
+import AppHeader from "../../../components/Common/AppHeader";
 import AppInput from "../../../components/Common/AppInput";
 import CategoryField from "../../../components/AddListItem/CategoryField";
 import ValidationController from "../../../components/Common/ValidationController";
@@ -93,12 +94,12 @@ const AddListItem = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={colors.deepTeal} />
-                </TouchableOpacity>
-                <AppText style={styles.headerTitle}>{isEditing ? 'Edit Item' : 'Add New Item'}</AppText>
-            </View>
+            <AppHeader 
+                title={isEditing ? 'Edit Item' : 'Add New Item'} 
+                containerStyle={styles.header} 
+                titleStyle={styles.headerTitle} 
+                onBackPress={handleBack}
+            />
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <FormField label="ITEM NAME">

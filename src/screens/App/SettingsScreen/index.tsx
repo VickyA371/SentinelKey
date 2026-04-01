@@ -7,6 +7,7 @@ import { getAuth, signOut } from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 
 import AppText from '../../../components/Common/AppText';
+import AppHeader from '../../../components/Common/AppHeader';
 import SettingsItem from '../../../components/SettingsScreen/SettingsItem';
 
 import styles from './styles';
@@ -35,11 +36,7 @@ const SettingsScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header with back button */}
-        <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={24} color={colors.charcoal} />
-            </TouchableOpacity>
-        </View>
+        <AppHeader containerStyle={styles.header} />
 
         {/* User Profile Quick View */}
         <View style={styles.profileSection}>
