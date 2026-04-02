@@ -5,10 +5,16 @@ import { useEffect, useState } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { COLLECTIONS } from '../constants/firebase';
-import { RootState } from '../store';
+import { RootState, AppDispatch } from '../store';
 import { setData, clearData } from '../store/slices/authSlice';
+import {
+  loadSecuritySettings,
+  setBiometricAuthenticated,
+  clearSecuritySettings,
+} from '../store/slices/securitySlice';
 import { View, ActivityIndicator, Linking } from 'react-native';
 import colors from '../constants/colors';
+import BiometricGateScreen from '../components/Common/BiometricGateScreen';
 
 // auth screens
 import LoginScreen from '../screens/Auth/Login';
@@ -124,8 +130,21 @@ async function handleEmailVerificationLink(url: string, dispatch: any) {
 }
 
 const RootNavigation = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [initializing, setInitializing] = useState(true);
+
+  const { fingerprintAccessEnabled, biometricAuthenticated, isLoaded } = useSelector(
+    (state: RootState) => state.security,
+  );
+  const isLoggedIn = useSelector((state: RootState) => {
+    const { uid, isAccountVerified } = state.auth;
+    return !!uid && !!isAccountVerified;
+  });
+
+  // Load security settings from AsyncStorage
+  useEffect(() => {
+    dispatch(loadSecuritySettings());
+  }, [dispatch]);
 
   useEffect(() => {
     // Handle email verification deep link (app opened from verification email with handleCodeInApp)
@@ -159,6 +178,7 @@ const RootNavigation = () => {
           dispatch(clearData());
         }
       } else {
+        dispatch(clearSecuritySettings());
         dispatch(clearData());
       }
       setInitializing(false);
@@ -167,7 +187,7 @@ const RootNavigation = () => {
     return unsubscribe;
   }, [dispatch]);
 
-  if (initializing) {
+  if (initializing || !isLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.offWhiteBlueGray }}>
         <ActivityIndicator size="large" color={colors.deepTeal} />
@@ -175,7 +195,17 @@ const RootNavigation = () => {
     );
   }
 
+  // Show biometric gate if: user is logged in + fingerprint access is enabled + not yet authenticated this session
+  if (isLoggedIn && fingerprintAccessEnabled && !biometricAuthenticated) {
+    return (
+      <BiometricGateScreen
+        onAuthenticated={() => dispatch(setBiometricAuthenticated(true))}
+      />
+    );
+  }
+
   return <InternalNavigation />;
 };
 
 export default RootNavigation;
+

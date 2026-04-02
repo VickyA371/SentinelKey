@@ -5,6 +5,7 @@ import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from "@gorhom/
 import Ionicons from "@react-native-vector-icons/ionicons";
 import firestore from '@react-native-firebase/firestore';
 import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { useSelector } from 'react-redux';
 
 // components
 import AppText from "../../Common/AppText";
@@ -17,9 +18,11 @@ import { COLLECTIONS } from "../../../constants/firebase";
 
 // types
 import { AppScreensPropTypes } from "../../../navigation/types";
+import { RootState } from "../../../store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { decrypt } from "../../../utils/crypto";
+import { promptBiometric } from "../../../utils/biometrics";
 import Clipboard from '@react-native-clipboard/clipboard';
 
 interface Props {
@@ -30,6 +33,10 @@ interface Props {
 const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onClose }, ref) => {
     const safeAreaInsets = useSafeAreaInsets();
     const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
+
+    const enhancedPrivacyEnabled = useSelector(
+        (state: RootState) => state.security.enhancedPrivacyEnabled,
+    );
 
     const [showPassword, setShowPassword] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -48,10 +55,26 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         fetchDecryptedPassword();
     }, [item?.password]);
 
-    const handleCopy = (textToCopy: string, label: string) => {
+    const handleCopy = async (textToCopy: string, label: string, isPassword: boolean = false) => {
         if (!textToCopy) return;
+
+        // If Enhanced Privacy is enabled and this is a password field, require biometric
+        if (isPassword && enhancedPrivacyEnabled) {
+            const { success } = await promptBiometric('Authenticate to copy password');
+            if (!success) return;
+        }
+
         Clipboard.setString(textToCopy);
         showSuccess('Copied', `${label} copied to clipboard`);
+    };
+
+    const handleTogglePasswordVisibility = async () => {
+        if (!showPassword && enhancedPrivacyEnabled) {
+            // Revealing password — require biometric
+            const { success } = await promptBiometric('Authenticate to view password');
+            if (!success) return;
+        }
+        setShowPassword(!showPassword);
     };
 
     const renderBackdrop = useCallback(
@@ -124,9 +147,9 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                             value={showPassword ? decryptedPassword : "••••••••••••"}
                             hasVisibility
                             hasCopy
-                            onVisibilityToggle={() => setShowPassword(!showPassword)}
+                            onVisibilityToggle={handleTogglePasswordVisibility}
                             isPasswordVisible={showPassword}
-                            onCopy={() => handleCopy(decryptedPassword, "Password")}
+                            onCopy={() => handleCopy(decryptedPassword, "Password", true)}
                         />
                         <DetailRow
                             label="CATEGORY"

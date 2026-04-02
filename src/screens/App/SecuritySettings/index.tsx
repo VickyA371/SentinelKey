@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, ScrollView, Switch } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { useNavigation } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
 
 import AppText from '../../../components/Common/AppText';
 import AppHeader from '../../../components/Common/AppHeader';
@@ -10,11 +10,59 @@ import AppHeader from '../../../components/Common/AppHeader';
 import colors from '../../../constants/colors';
 import styles from './styles';
 
-const SecuritySettingsScreen = () => {
-  const navigation = useNavigation();
+import { RootState, AppDispatch } from '../../../store';
+import {
+  setFingerprintAccess,
+  setEnhancedPrivacy,
+  persistSecuritySetting,
+} from '../../../store/slices/securitySlice';
+import { isBiometricAvailable, promptBiometric } from '../../../utils/biometrics';
+import { showError } from '../../../utils/toast';
 
-  const [fingerprintEnabled, setFingerprintEnabled] = useState(true);
-  const [privacyEnabled, setPrivacyEnabled] = useState(false);
+const SecuritySettingsScreen = () => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { fingerprintAccessEnabled, enhancedPrivacyEnabled } = useSelector(
+    (state: RootState) => state.security,
+  );
+
+  const handleFingerprintToggle = useCallback(async (newValue: boolean) => {
+    if (newValue) {
+      // Enabling — verify biometrics first
+      const available = await isBiometricAvailable();
+      if (!available) {
+        showError('Unavailable', 'No biometric authentication is set up on this device.');
+        return;
+      }
+
+      const { success } = await promptBiometric('Authenticate to enable Fingerprint Access');
+      if (!success) {
+        return; // cancelled or failed
+      }
+    }
+
+    dispatch(setFingerprintAccess(newValue));
+    await persistSecuritySetting('fingerprint', newValue);
+  }, [dispatch]);
+
+  const handlePrivacyToggle = useCallback(async (newValue: boolean) => {
+    if (newValue) {
+      // Enabling — verify biometrics first
+      const available = await isBiometricAvailable();
+      if (!available) {
+        showError('Unavailable', 'No biometric authentication is set up on this device.');
+        return;
+      }
+
+      const { success } = await promptBiometric('Authenticate to enable Enhanced Privacy');
+      if (!success) {
+        return; // cancelled or failed
+      }
+    }
+
+    dispatch(setEnhancedPrivacy(newValue));
+    await persistSecuritySetting('privacy', newValue);
+  }, [dispatch]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,8 +100,8 @@ const SecuritySettingsScreen = () => {
                 </View>
               </View>
               <Switch
-                value={fingerprintEnabled}
-                onValueChange={setFingerprintEnabled}
+                value={fingerprintAccessEnabled}
+                onValueChange={handleFingerprintToggle}
                 trackColor={{ false: colors.iceGray, true: colors.deepTeal }}
                 thumbColor={colors.white}
               />
@@ -71,8 +119,8 @@ const SecuritySettingsScreen = () => {
                 </View>
               </View>
               <Switch
-                value={privacyEnabled}
-                onValueChange={setPrivacyEnabled}
+                value={enhancedPrivacyEnabled}
+                onValueChange={handlePrivacyToggle}
                 trackColor={{ false: colors.iceGray, true: colors.deepTeal }}
                 thumbColor={colors.white}
               />

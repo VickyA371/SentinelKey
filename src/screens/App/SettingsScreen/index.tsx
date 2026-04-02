@@ -13,17 +13,19 @@ import SettingsItem from '../../../components/SettingsScreen/SettingsItem';
 import styles from './styles';
 import colors from '../../../constants/colors';
 
-import { RootState } from '../../../store';
+import { RootState, AppDispatch } from '../../../store';
 import { clearData } from '../../../store/slices/authSlice';
+import { clearSecuritySettings } from '../../../store/slices/securitySlice';
 
 const SettingsScreen = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation();
 
   const { fullName, email } = useSelector((state: RootState) => state.auth);
 
   const handleLogout = async () => {
     try {
+      await dispatch(clearSecuritySettings());
       await signOut(getAuth());
       dispatch(clearData());
     } catch (err: any) {

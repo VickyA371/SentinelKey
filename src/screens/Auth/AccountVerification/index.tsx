@@ -10,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../../../store';
+import { clearSecuritySettings } from '../../../store/slices/securitySlice';
 
 // components
 import AppText from '../../../components/Common/AppText';
@@ -23,7 +25,7 @@ import { setData, clearData } from '../../../store/slices/authSlice';
 import { useFocusEffect } from '@react-navigation/native';
 
 const AccountVerification = () => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const [resendLoading, setResendLoading] = useState(false);
     const [checkingStatus, setCheckingStatus] = useState(false);
 
@@ -92,6 +94,7 @@ const AccountVerification = () => {
                     style: 'destructive',
                     onPress: async () => {
                         try {
+                            await dispatch(clearSecuritySettings());
                             await auth().signOut();
                             dispatch(clearData());
                         } catch (error) {
