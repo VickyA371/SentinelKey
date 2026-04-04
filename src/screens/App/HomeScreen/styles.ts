@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     listContent: {
         paddingBottom: 100, // accommodate FAB
         paddingHorizontal: 2,
-        paddingTop: 2,
+        paddingTop: 8,
     }
 })
 

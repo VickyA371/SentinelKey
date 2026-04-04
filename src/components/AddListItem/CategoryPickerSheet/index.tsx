@@ -14,18 +14,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 interface Props {
     onClose: () => void;
     onSelect: (category: string) => void;
-    onAddNew: () => void;
 }
 
-const CATEGORIES = [
+export const CATEGORIES = [
     { id: "1", name: "Social", icon: "share-social-outline" },
     { id: "2", name: "Finance", icon: "card-outline" },
     { id: "3", name: "Work", icon: "briefcase-outline" },
     { id: "4", name: "Personal", icon: "person-outline" },
     { id: "5", name: "Entertainment", icon: "game-controller-outline" },
+    { id: "6", name: "Other", icon: "ellipsis-horizontal" },
 ];
 
-const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose, onSelect, onAddNew }, ref) => {
+export const categoriesMap = CATEGORIES.reduce((acc: Record<string, string>, currCategory) => {
+    acc[currCategory.name.toLowerCase()] = currCategory.name
+    return acc
+}, {})
+
+const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose, onSelect }, ref) => {
     const safeAreaInsets = useSafeAreaInsets();
     
     const renderBackdrop = useCallback(
@@ -42,7 +47,7 @@ const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose
         <TouchableOpacity
             style={styles.categoryItem}
             onPress={() => {
-                onSelect(item.name);
+                onSelect(item.name.toLowerCase());
                 onClose();
             }}
         >
@@ -64,7 +69,7 @@ const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose
             handleIndicatorStyle={styles.indicator}
             backgroundStyle={styles.background}
         >
-            <BottomSheetView style={[styles.container, { paddingBottom: 24 + safeAreaInsets.bottom }]}>
+            <BottomSheetView style={[styles.container, { paddingBottom: 12 + safeAreaInsets.bottom }]}>
                 <View style={styles.header}>
                     <AppText style={styles.title}>Select Category</AppText>
                     <TouchableOpacity onPress={onClose}>
@@ -76,14 +81,8 @@ const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose
                     data={CATEGORIES}
                     renderItem={renderItem}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                 />
-
-                <TouchableOpacity style={styles.addNewButton} onPress={onAddNew}>
-                    <Ionicons name="add-circle-outline" size={20} color={colors.deepTeal} style={{ marginRight: 8 }} />
-                    <AppText style={styles.addNewText}>Add Custom Category</AppText>
-                </TouchableOpacity>
             </BottomSheetView>
         </BottomSheetModal>
     );

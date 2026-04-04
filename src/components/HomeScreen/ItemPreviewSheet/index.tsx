@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { decrypt } from "../../../utils/crypto";
 import { promptBiometric } from "../../../utils/biometrics";
 import Clipboard from '@react-native-clipboard/clipboard';
+import { categoriesMap } from "../../AddListItem/CategoryPickerSheet";
 
 interface Props {
     item: any;
@@ -154,7 +155,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                         />
                         <DetailRow
                             label="CATEGORY"
-                            value={item.category || "General"}
+                            value={categoriesMap[item.category] || "General"}
                             hasBullet
                             bulletColor={item.iconBg || colors.deepTeal}
                         />

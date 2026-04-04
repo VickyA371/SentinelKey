@@ -1,8 +1,10 @@
 import React, { useRef, useState } from "react";
-import { FlatList, ListRenderItemInfo, View } from "react-native";
+import { FlatList, ListRenderItemInfo } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 // components
 import Header from "../../../components/HomeScreen/Header";
@@ -11,21 +13,19 @@ import CategoryTabs from "../../../components/HomeScreen/CategoryTabs";
 import ListItem from "../../../components/HomeScreen/ListItem";
 import AddButton from "../../../components/HomeScreen/AddButton";
 import ItemPreviewSheet from "../../../components/HomeScreen/ItemPreviewSheet";
-import AppText from "../../../components/Common/AppText";
+import EmptyList from "../../../components/HomeScreen/EmptyList";
 
-import colors from "../../../constants/colors";
+// constants
+import { COLLECTIONS } from "../../../constants/firebase";
+
+// styles
 import styles from "./styles";
 
 // types
 import { AppScreensPropTypes } from "../../../navigation/types";
 
-// Re-adjusting iconBg for exact match with design if possible
-// VAULT_DATA removed as it is now fetched from Firestore
-
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+// misc
 import { getCategoryIcon, getDynamicColor } from "../../../utils/mapping";
-import { COLLECTIONS } from "../../../constants/firebase";
 
 function HomeScreen() {
   const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
@@ -81,29 +81,31 @@ function HomeScreen() {
   const keyExtractor = (item: any) => item.id;
 
   const filteredData = vaultData.filter(item => {
-    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const matchesCategory = activeCategory === "All" || item.category.toLowerCase() === activeCategory.toLowerCase();
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
+  const renderEmptyListComponent = () => <EmptyList loading={loading} />
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <SearchBar value={searchQuery} onChange={setSearchQuery} />
-      <CategoryTabs activeCategory={activeCategory} onSelect={setActiveCategory} />
+      <SearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
+      <CategoryTabs
+        activeCategory={activeCategory}
+        onSelect={setActiveCategory}
+      />
       <FlatList
         data={filteredData}
         keyExtractor={keyExtractor}
         renderItem={renderListItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        ListEmptyComponent={() => (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 100 }}>
-            <AppText style={{ color: colors.mutedBlueGray }}>
-              {loading ? "Loading your vault..." : "No items found"}
-            </AppText>
-          </View>
-        )}
+        ListEmptyComponent={renderEmptyListComponent}
       />
       <AddButton onPress={() => navigation.navigate('AddListItem')} />
       <ItemPreviewSheet

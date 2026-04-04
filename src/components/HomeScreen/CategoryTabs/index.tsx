@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
 // components
@@ -6,8 +6,9 @@ import AppText from "../../Common/AppText";
 
 // constants
 import colors from "../../../constants/colors";
+import { CATEGORIES as passwordCategories } from "../../AddListItem/CategoryPickerSheet";
 
-const CATEGORIES = ["All", "Social", "Finance", "Work", "Personal"];
+const CATEGORIES = ["All", ...passwordCategories.map(passwordCategory => passwordCategory.name)]
 
 interface Props {
   activeCategory: string;

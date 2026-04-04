@@ -5,8 +5,7 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 
 // components
 import AppText from "../../Common/AppText";
-import CategoryPickerSheet from "../CategoryPickerSheet";
-import CategorySheet from "../CategorySheet";
+import CategoryPickerSheet, { categoriesMap } from "../CategoryPickerSheet";
 
 // constants
 import colors from "../../../constants/colors";
@@ -18,26 +17,14 @@ interface Props {
 }
 
 const CategoryField = ({ value, onChange, error }: Props) => {
-    const categorySheetRef = useRef<BottomSheetModal>(null);
     const categoryPickerRef = useRef<BottomSheetModal>(null);
 
     const handleOpenCategoryPicker = () => {
         categoryPickerRef.current?.present();
     };
 
-    const handleOpenCategorySheet = () => {
-        categoryPickerRef.current?.dismiss();
-        setTimeout(() => {
-            categorySheetRef.current?.present();
-        }, 300);
-    };
-
     const handleSelectCategory = (selectedCategory: string) => {
         onChange?.(selectedCategory);
-    };
-
-    const handleSaveCategory = (newCategory: { name: string; icon: string }) => {
-        onChange?.(newCategory.name);
     };
 
     return (
@@ -47,7 +34,7 @@ const CategoryField = ({ value, onChange, error }: Props) => {
                 onPress={handleOpenCategoryPicker}
             >
                 <AppText style={[styles.categoryValue, !value && styles.placeholderText]}>
-                    {value || "Select a category"}
+                    {value ? categoriesMap[value] : "Select a category"}
                 </AppText>
                 <Ionicons name="chevron-down" size={20} color={colors.deepTeal} />
             </TouchableOpacity>
@@ -58,13 +45,6 @@ const CategoryField = ({ value, onChange, error }: Props) => {
                 ref={categoryPickerRef}
                 onClose={() => categoryPickerRef.current?.dismiss()}
                 onSelect={handleSelectCategory}
-                onAddNew={handleOpenCategorySheet}
-            />
-
-            <CategorySheet
-                ref={categorySheetRef}
-                onClose={() => categorySheetRef.current?.dismiss()}
-                onSave={handleSaveCategory}
             />
         </View>
     );

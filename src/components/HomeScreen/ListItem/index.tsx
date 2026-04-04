@@ -7,6 +7,7 @@ import AppText from "../../Common/AppText";
 
 // constants
 import colors from "../../../constants/colors";
+import { categoriesMap } from "../../AddListItem/CategoryPickerSheet";
 
 interface Props {
     title: string;
@@ -24,7 +25,7 @@ const ListItem: React.FC<Props> = ({ title, category, icon, iconBg, onPress }) =
             </View>
             <View style={styles.content}>
                 <AppText style={styles.title}>{title}</AppText>
-                <AppText style={styles.subtitle}>{category}</AppText>
+                <AppText style={styles.subtitle}>{categoriesMap[category]}</AppText>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.iceGray} />
         </TouchableOpacity>

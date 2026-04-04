@@ -13,7 +13,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 24,
-        paddingBottom: 24,
     },
     header: {
         flexDirection: "row",
@@ -25,9 +24,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: "700",
         color: colors.charcoal,
-    },
-    listContent: {
-        paddingBottom: 20,
     },
     categoryItem: {
         flexDirection: "row",
