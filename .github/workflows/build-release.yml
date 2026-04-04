@@ -2,8 +2,8 @@ name: Build & Release APK
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - ci_cd_implementation
 
 jobs:
   build:
