@@ -9,7 +9,8 @@ import { useSelector } from 'react-redux';
 
 // components
 import AppText from "../../Common/AppText";
-import DeleteModal from "../../Common/DeleteModal";
+import CommonAlert from "../../Common/CommonAlert";
+import alertStyles from "../../Common/CommonAlert/styles";
 import auth from '@react-native-firebase/auth';
 
 // constants
@@ -178,11 +179,18 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                 </BottomSheetView>
             </BottomSheetModal>
 
-            <DeleteModal
+            <CommonAlert
                 visible={deleteModalVisible}
-                itemName={item.title}
+                title="Delete Password?"
+                description={
+                    <>Are you sure you want to delete your{" "}
+                    <AppText style={alertStyles.boldText}>{item.title}</AppText>
+                    {" "}credentials? This action is permanent and cannot be undone.</>
+                }
+                confirmText="Delete Item"
+                icon="warning"
                 onClose={() => setDeleteModalVisible(false)}
-                onDelete={handleConfirmDelete}
+                onConfirm={handleConfirmDelete}
             />
         </>
     );

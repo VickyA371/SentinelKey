@@ -11,12 +11,27 @@ import styles from "./styles";
 
 interface Props {
     visible: boolean;
-    itemName: string;
+    title: string;
+    description: React.ReactNode;
+    confirmText: string;
     onClose: () => void;
-    onDelete: () => void;
+    onConfirm: () => void;
+    icon?: string;
+    iconColor?: string;
+    confirmColor?: string;
 }
 
-const DeleteModal = ({ visible, itemName, onClose, onDelete }: Props) => {
+const CommonAlert = ({
+    visible,
+    title,
+    description,
+    confirmText,
+    onClose,
+    onConfirm,
+    icon = "warning",
+    iconColor = colors.red,
+    confirmColor = colors.red,
+}: Props) => {
     return (
         <Modal
             visible={visible}
@@ -29,25 +44,26 @@ const DeleteModal = ({ visible, itemName, onClose, onDelete }: Props) => {
                     <TouchableWithoutFeedback>
                         <View style={styles.container}>
                             <View style={styles.iconContainer}>
-                                <View style={styles.iconBackground}>
-                                    <Ionicons name="warning" size={32} color={colors.red} />
+                                <View style={[styles.iconBackground, { backgroundColor: `${iconColor}15` }]}>
+                                    <Ionicons name={icon as any} size={32} color={iconColor} />
                                 </View>
                             </View>
 
-                            <AppText style={styles.title}>Delete Password?</AppText>
+                            <AppText style={styles.title}>{title}</AppText>
                             <AppText style={styles.description}>
-                                Are you sure you want to delete your{" "}
-                                <AppText style={styles.boldText}>{itemName}</AppText>
-                                {" "}credentials? This action is permanent and cannot be undone.
+                                {description}
                             </AppText>
 
                             <View style={styles.footer}>
-                                <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
-                                    <AppText style={styles.deleteButtonText}>Delete Item</AppText>
+                                <TouchableOpacity
+                                    style={[styles.confirmButton, { backgroundColor: confirmColor, shadowColor: confirmColor }]}
+                                    onPress={onConfirm}
+                                >
+                                    <AppText style={styles.confirmButtonText}>{confirmText}</AppText>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                                    <AppText style={styles.cancelButtonText}>Cancel</AppText>
+                                    <AppText style={styles.cancelButtonText}>{"Cancel"}</AppText>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -58,4 +74,4 @@ const DeleteModal = ({ visible, itemName, onClose, onDelete }: Props) => {
     );
 };
 
-export default DeleteModal;
+export default CommonAlert;

@@ -29,7 +29,6 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 32,
-        backgroundColor: "#FFEBEB", // Light red background for the icon
         alignItems: "center",
         justifyContent: "center",
     },
@@ -54,20 +53,18 @@ const styles = StyleSheet.create({
         width: "100%",
         gap: 12,
     },
-    deleteButton: {
+    confirmButton: {
         height: 56,
         borderRadius: 16,
-        backgroundColor: colors.red,
         alignItems: "center",
         justifyContent: "center",
         // Shadow
-        shadowColor: colors.red,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 4,
     },
-    deleteButtonText: {
+    confirmButtonText: {
         fontSize: 18,
         fontWeight: "700",
         color: colors.white,

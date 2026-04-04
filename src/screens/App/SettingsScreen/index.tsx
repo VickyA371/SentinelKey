@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
@@ -9,6 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import AppText from '../../../components/Common/AppText';
 import AppHeader from '../../../components/Common/AppHeader';
 import SettingsItem from '../../../components/SettingsScreen/SettingsItem';
+import CommonAlert from '../../../components/Common/CommonAlert';
 
 import styles from './styles';
 import colors from '../../../constants/colors';
@@ -20,6 +21,7 @@ import { clearSecuritySettings } from '../../../store/slices/securitySlice';
 const SettingsScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation();
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   const { fullName, email } = useSelector((state: RootState) => state.auth);
 
@@ -91,9 +93,22 @@ const SettingsScreen = () => {
             titleColor={colors.red}
             subtitleColor={colors.red}
             showChevron={false}
-            onPress={handleLogout}
+            onPress={() => setLogoutModalVisible(true)}
           />
         </View>
+
+        <CommonAlert
+          visible={logoutModalVisible}
+          title="Logout?"
+          description="Are you sure you want to logout? You will need to sign in again to access your passwords."
+          confirmText="Logout"
+          icon="log-out-outline"
+          onClose={() => setLogoutModalVisible(false)}
+          onConfirm={() => {
+            setLogoutModalVisible(false);
+            handleLogout();
+          }}
+        />
 
         {/* Meta Information */}
         <View style={styles.metaContainer}>
