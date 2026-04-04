@@ -42,7 +42,7 @@ export const signUpFormSchema = yup.object({
 export const addListItemSchema = yup.object({
   itemName: yup.string().required('Item name is required'),
   username: yup.string().required('Username/Email is required'),
-  password: yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+  password: yup.string().required('Password is required'),
   confirmPassword: yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm password is required'),
   category: yup.string().required('Category is required'),
 }).required();
