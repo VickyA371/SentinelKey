@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Image, TouchableOpacity, ScrollView, Share, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,6 +33,32 @@ const SettingsScreen = () => {
     } catch (err: any) {
       console.log('err :: ', err)
       dispatch(clearData());
+    }
+  };
+
+  const shareApp = async () => {
+    const url = "https://www.google.com";
+    const message = `🔐 Tired of forgetting passwords?
+
+      Sentinel Key lets you securely store and manage all your passwords with bank-level encryption — fast, simple, and safe.
+
+      Try it now:
+      https://www.google.com`;
+
+    try {
+      await Share.share(
+        {
+          title: "Share With",
+          message: message,
+          url: Platform.OS === 'ios' ? url : undefined,
+        },
+        {
+          dialogTitle: "Share with",
+          tintColor: colors.deepTeal,
+        }
+      );
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -71,13 +97,24 @@ const SettingsScreen = () => {
             onPress={() => navigation.navigate('ProfileDetails' as never)}
           />
 
-          <View style={styles.divider} />
+          <View style={styles.sectionHeader}>
+            <AppText style={styles.sectionHeaderText}>{"APPLICATION"}</AppText>
+          </View>
 
           <SettingsItem 
             title="Security Settings"
             subtitle="Two-Factor, Biometrics, and Keys"
             iconName="shield-checkmark-outline"
             onPress={() => navigation.navigate('SecuritySettings' as never)}
+          />
+
+          <View style={styles.divider} />
+
+          <SettingsItem 
+            title="Share"
+            subtitle="Help your connections stay secure"
+            iconName="share-social-outline"
+            onPress={shareApp}
           />
 
           <View style={styles.sectionHeader}>
