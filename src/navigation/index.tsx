@@ -176,18 +176,20 @@ const RootNavigation = () => {
         } catch (error) {
           console.error('Auth state: error fetching user data:', error);
           dispatch(clearData());
+        } finally {
+          setInitializing(false);
         }
       } else {
         dispatch(clearSecuritySettings());
         dispatch(clearData());
+        setInitializing(false);
       }
-      setInitializing(false);
     });
 
     return unsubscribe;
   }, [dispatch]);
 
-  if (initializing || !isLoaded) {
+  if (initializing || (fingerprintAccessEnabled && biometricAuthenticated ? !isLoaded : false)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.offWhiteBlueGray }}>
         <ActivityIndicator size="large" color={colors.deepTeal} />
