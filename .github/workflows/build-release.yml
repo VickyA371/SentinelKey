@@ -70,8 +70,9 @@ jobs:
       - name: Create Release & Upload APK
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: dev-${{ github.run_number }}
+          name: Dev Build ${{ github.run_number }}
           files: app-${{ github.ref_name }}.apk
-          name: Release ${{ github.ref_name }}
-          body: "🚀 APK release for version ${{ github.ref_name }}"
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
