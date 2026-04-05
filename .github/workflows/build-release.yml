@@ -56,7 +56,7 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}
 
-      # 🔢 Generate version
+      # 🔢 Generate version (FIXED)
       - name: Generate version
         id: version
         run: |
@@ -77,6 +77,20 @@ jobs:
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+
+      # 🔍 Debug version (helps avoid future issues)
+      - name: Debug version
+        run: |
+          echo "VERSION = ${{ steps.version.outputs.version }}"
+          echo "VERSION_CODE = ${{ steps.version.outputs.version_code }}"
+
+      # ✅ Validate version format
+      - name: Validate version
+        run: |
+          if [[ ! "${{ steps.version.outputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format!"
+            exit 1
+          fi
 
       # 🔧 Update Gradle version
       - name: Update Android version
@@ -104,7 +118,7 @@ jobs:
           mv android/app/build/outputs/apk/release/app-release.apk \
              app-${{ steps.version.outputs.version }}.apk
 
-      # 🏷️ Create GitHub Release
+      # 🏷️ Create GitHub Release (FIXED)
       - name: Create Release & Upload APK
         uses: softprops/action-gh-release@v1
         with:
@@ -119,10 +133,10 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: YOUR_PROJECT_ID
+          project_id: sentinel-key
           service_account_key: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      # 🔐 Auth (optional but safe)
+      # 🔐 Get access token
       - name: Get Access Token
         id: auth
         run: |
