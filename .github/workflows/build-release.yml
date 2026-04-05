@@ -198,18 +198,6 @@ on:
       - ci_cd_implementation
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    name: Test Firebase Remote Config
-
-on:
-  push:
-    branches:
-      - ci_cd_implementation   # your test branch
-
-jobs:
   test-remote-config:
     runs-on: ubuntu-latest
 
