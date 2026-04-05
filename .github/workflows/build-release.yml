@@ -1,3 +1,195 @@
+# name: Build & Release APK
+
+# on:
+#   push:
+#     branches:
+#       - ci_cd_implementation
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+
+#     env:
+#       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
+#     steps:
+#       # 📥 Checkout
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       # 🟢 Node setup
+#       - name: Setup Node
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: 22.20.0
+#           cache: 'yarn'
+
+#       - name: Install Yarn
+#         run: npm install -g yarn
+
+#       - name: Install dependencies
+#         run: yarn install --immutable || yarn install --frozen-lockfile
+
+#       # ☕ Java setup
+#       - name: Setup Zulu JDK 17
+#         uses: actions/setup-java@v3
+#         with:
+#           distribution: 'zulu'
+#           java-version: '17'
+#           cache: gradle
+
+#       # 📱 Android setup
+#       - name: Setup Android SDK
+#         uses: android-actions/setup-android@v3
+
+#       - name: Accept Android licenses
+#         run: yes | sdkmanager --licenses
+
+#       # ⚡ Gradle cache
+#       - name: Cache Gradle
+#         uses: actions/cache@v3
+#         with:
+#           path: |
+#             ~/.gradle/caches
+#             ~/.gradle/wrapper
+#           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+#           restore-keys: |
+#             gradle-${{ runner.os }}
+
+#       # 🔢 Generate version (FIXED - ignores bad tags)
+#       - name: Generate version
+#         id: version
+#         run: |
+#           git fetch --tags
+
+#           LAST_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+
+#           if [ -z "$LAST_TAG" ]; then
+#             VERSION="0.0.1"
+#           else
+#             VERSION_CLEAN=${LAST_TAG#v}
+#             IFS='.' read -r major minor patch <<< "$VERSION_CLEAN"
+#             patch=$((patch + 1))
+#             VERSION="$major.$minor.$patch"
+#           fi
+
+#           VERSION_CODE=$(date +%s)
+
+#           echo "version=$VERSION" >> $GITHUB_OUTPUT
+#           echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+
+#       # 🔍 Debug version
+#       - name: Debug version
+#         run: |
+#           echo "VERSION = ${{ steps.version.outputs.version }}"
+#           echo "VERSION_CODE = ${{ steps.version.outputs.version_code }}"
+
+#       # ✅ Validate version format
+#       - name: Validate version
+#         run: |
+#           if [[ ! "${{ steps.version.outputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+#             echo "Invalid version format!"
+#             exit 1
+#           fi
+
+#       # 🔧 Update Gradle version
+#       - name: Update Android version
+#         run: |
+#           sed -i "s/versionName \".*\"/versionName \"${{ steps.version.outputs.version }}\"/" android/app/build.gradle
+#           sed -i "s/versionCode [0-9]*/versionCode ${{ steps.version.outputs.version_code }}/" android/app/build.gradle
+
+#       # 🔐 Fix gradlew permission
+#       - name: Grant execute permission
+#         run: chmod +x android/gradlew
+
+#       # 🏗️ Build APK
+#       - name: Build Release APK
+#         run: |
+#           cd android
+#           ./gradlew assembleRelease --no-daemon --parallel --build-cache
+
+#       # ✅ Verify APK
+#       - name: Verify APK exists
+#         run: ls android/app/build/outputs/apk/release/
+
+#       # 📦 Rename APK
+#       - name: Rename APK
+#         run: |
+#           mv android/app/build/outputs/apk/release/app-release.apk \
+#              app-${{ steps.version.outputs.version }}.apk
+
+#       # 🏷️ Create GitHub Release (VALID TAG)
+#       - name: Create Release & Upload APK
+#         uses: softprops/action-gh-release@v1
+#         with:
+#           tag_name: v${{ steps.version.outputs.version }}
+#           name: Release v${{ steps.version.outputs.version }}
+#           files: app-${{ steps.version.outputs.version }}.apk
+#           prerelease: true
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+#       # 🔐 Authenticate with Google Cloud
+#       - name: Authenticate to Google Cloud
+#         uses: google-github-actions/auth@v2
+#         with:
+#           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+#       # ☁️ Setup gcloud CLI
+#       - name: Setup gcloud
+#         uses: google-github-actions/setup-gcloud@v2
+#         with:
+#           project_id: sentinel-key
+
+#       # 🔐 Get access token
+#       - name: Get Access Token
+#         id: auth
+#         run: |
+#           ACCESS_TOKEN=$(gcloud auth application-default print-access-token)
+#           echo "token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
+
+#       - name: Update Firebase Remote Config
+#         run: |
+#           VERSION=${{ steps.version.outputs.version }}
+#           VERSION_CODE=${{ steps.version.outputs.version_code }}
+
+#           APK_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/app-$VERSION.apk"
+
+#           # 🔹 Step 1: Get existing config + ETag
+#           RESPONSE=$(curl -s -D headers.txt \
+#             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+#             "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig")
+
+#           ETAG=$(grep -i etag headers.txt | tr -d '\r' | awk '{print $2}')
+
+#           echo "ETAG=$ETAG"
+
+#           # 🔹 Step 2: Update config safely
+#           curl -X PUT \
+#             -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+#             -H "Content-Type: application/json; UTF-8" \
+#             -H "If-Match: $ETAG" \
+#             -d "{
+#               \"parameters\": {
+#                 \"apk_download_url\": {
+#                   \"defaultValue\": {
+#                     \"value\": \"$APK_URL\"
+#                   }
+#                 },
+#                 \"latest_version\": {
+#                   \"defaultValue\": {
+#                     \"value\": \"$VERSION\"
+#                   }
+#                 },
+#                 \"version_code\": {
+#                   \"defaultValue\": {
+#                     \"value\": \"$VERSION_CODE\"
+#                   }
+#                 }
+#               }
+#             }" \
+#             "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig"
+
 name: Build & Release APK
 
 on:
@@ -9,173 +201,46 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-
     steps:
       # 📥 Checkout
-      - name: Checkout code
-        uses: actions/checkout@v3
 
-      # 🟢 Node setup
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.20.0
-          cache: 'yarn'
+    - name: Test Firebase Remote Config (Dummy Data)
+      run: |
+        VERSION="test-1.0.0"
+        VERSION_CODE="123456"
+        APK_URL="https://example.com/dummy.apk"
 
-      - name: Install Yarn
-        run: npm install -g yarn
+        # 🔹 Step 1: Get existing config + ETag
+        RESPONSE=$(curl -s -D headers.txt \
+          -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+          "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig")
 
-      - name: Install dependencies
-        run: yarn install --immutable || yarn install --frozen-lockfile
+        ETAG=$(grep -i etag headers.txt | tr -d '\r' | awk '{print $2}')
 
-      # ☕ Java setup
-      - name: Setup Zulu JDK 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-          cache: gradle
+        echo "ETAG=$ETAG"
 
-      # 📱 Android setup
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android licenses
-        run: yes | sdkmanager --licenses
-
-      # ⚡ Gradle cache
-      - name: Cache Gradle
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}
-
-      # 🔢 Generate version (FIXED - ignores bad tags)
-      - name: Generate version
-        id: version
-        run: |
-          git fetch --tags
-
-          LAST_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
-
-          if [ -z "$LAST_TAG" ]; then
-            VERSION="0.0.1"
-          else
-            VERSION_CLEAN=${LAST_TAG#v}
-            IFS='.' read -r major minor patch <<< "$VERSION_CLEAN"
-            patch=$((patch + 1))
-            VERSION="$major.$minor.$patch"
-          fi
-
-          VERSION_CODE=$(date +%s)
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
-
-      # 🔍 Debug version
-      - name: Debug version
-        run: |
-          echo "VERSION = ${{ steps.version.outputs.version }}"
-          echo "VERSION_CODE = ${{ steps.version.outputs.version_code }}"
-
-      # ✅ Validate version format
-      - name: Validate version
-        run: |
-          if [[ ! "${{ steps.version.outputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid version format!"
-            exit 1
-          fi
-
-      # 🔧 Update Gradle version
-      - name: Update Android version
-        run: |
-          sed -i "s/versionName \".*\"/versionName \"${{ steps.version.outputs.version }}\"/" android/app/build.gradle
-          sed -i "s/versionCode [0-9]*/versionCode ${{ steps.version.outputs.version_code }}/" android/app/build.gradle
-
-      # 🔐 Fix gradlew permission
-      - name: Grant execute permission
-        run: chmod +x android/gradlew
-
-      # 🏗️ Build APK
-      - name: Build Release APK
-        run: |
-          cd android
-          ./gradlew assembleRelease --no-daemon --parallel --build-cache
-
-      # ✅ Verify APK
-      - name: Verify APK exists
-        run: ls android/app/build/outputs/apk/release/
-
-      # 📦 Rename APK
-      - name: Rename APK
-        run: |
-          mv android/app/build/outputs/apk/release/app-release.apk \
-             app-${{ steps.version.outputs.version }}.apk
-
-      # 🏷️ Create GitHub Release (VALID TAG)
-      - name: Create Release & Upload APK
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Release v${{ steps.version.outputs.version }}
-          files: app-${{ steps.version.outputs.version }}.apk
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 🔐 Authenticate with Google Cloud
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      # ☁️ Setup gcloud CLI
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: sentinel-key
-
-      # 🔐 Get access token
-      - name: Get Access Token
-        id: auth
-        run: |
-          ACCESS_TOKEN=$(gcloud auth application-default print-access-token)
-          echo "token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
-
-      # 🔥 Update Firebase Remote Config
-      - name: Update Firebase Remote Config
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          VERSION_CODE=${{ steps.version.outputs.version_code }}
-
-          APK_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/app-$VERSION.apk"
-
-          curl -X PUT \
-            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
-            -H "Content-Type: application/json; UTF-8" \
-            -d "{
-              \"parameters\": {
-                \"apk_download_url\": {
-                  \"defaultValue\": {
-                    \"value\": \"$APK_URL\"
-                  }
-                },
-                \"latest_version\": {
-                  \"defaultValue\": {
-                    \"value\": \"$VERSION\"
-                  }
-                },
-                \"version_code\": {
-                  \"defaultValue\": {
-                    \"value\": \"$VERSION_CODE\"
-                  }
+        # 🔹 Step 2: Update with dummy values
+        curl -X PUT \
+          -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+          -H "Content-Type: application/json; UTF-8" \
+          -H "If-Match: $ETAG" \
+          -d "{
+            \"parameters\": {
+              \"apk_download_url\": {
+                \"defaultValue\": {
+                  \"value\": \"$APK_URL\"
+                }
+              },
+              \"latest_version\": {
+                \"defaultValue\": {
+                  \"value\": \"$VERSION\"
+                }
+              },
+              \"version_code\": {
+                \"defaultValue\": {
+                  \"value\": \"$VERSION_CODE\"
                 }
               }
-            }" \
-            "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig"
+            }
+          }" \
+          "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig"
