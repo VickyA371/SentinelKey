@@ -217,7 +217,7 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: YOUR_PROJECT_ID
+          project_id: sentinel-key
 
       # 4️⃣ Get access token
       - name: Get Access Token
@@ -242,7 +242,7 @@ jobs:
           # 🔹 Step 1: Get existing config + ETag
           curl -s -D headers.txt \
             -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
-            "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig" \
+            "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig" \
             -o response.json
 
           echo "Response:"
@@ -280,4 +280,4 @@ jobs:
                 }
               }
             }" \
-            "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig"
+            "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig"
