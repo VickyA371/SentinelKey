@@ -130,7 +130,7 @@
 #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 #       # 🔐 Authenticate with Google Cloud
-#       - name: Authenticate to Google Cloud
+#       - name: sentinel-key
 #         uses: google-github-actions/auth@v2
 #         with:
 #           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -202,45 +202,94 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 📥 Checkout
+    name: Test Firebase Remote Config
 
-    - name: Test Firebase Remote Config (Dummy Data)
-      run: |
-        VERSION="test-1.0.0"
-        VERSION_CODE="123456"
-        APK_URL="https://example.com/dummy.apk"
+on:
+  push:
+    branches:
+      - ci_cd_implementation   # your test branch
 
-        # 🔹 Step 1: Get existing config + ETag
-        RESPONSE=$(curl -s -D headers.txt \
-          -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
-          "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig")
+jobs:
+  test-remote-config:
+    runs-on: ubuntu-latest
 
-        ETAG=$(grep -i etag headers.txt | tr -d '\r' | awk '{print $2}')
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-        echo "ETAG=$ETAG"
+      # 2️⃣ Authenticate with Google Cloud
+      - name: sentinel-key
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-        # 🔹 Step 2: Update with dummy values
-        curl -X PUT \
-          -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
-          -H "Content-Type: application/json; UTF-8" \
-          -H "If-Match: $ETAG" \
-          -d "{
-            \"parameters\": {
-              \"apk_download_url\": {
-                \"defaultValue\": {
-                  \"value\": \"$APK_URL\"
-                }
-              },
-              \"latest_version\": {
-                \"defaultValue\": {
-                  \"value\": \"$VERSION\"
-                }
-              },
-              \"version_code\": {
-                \"defaultValue\": {
-                  \"value\": \"$VERSION_CODE\"
+      # 3️⃣ Setup gcloud
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: YOUR_PROJECT_ID
+
+      # 4️⃣ Get access token
+      - name: Get Access Token
+        id: token
+        run: |
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          echo "token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
+          echo "TOKEN LENGTH: ${#ACCESS_TOKEN}"
+
+      # 5️⃣ Test Remote Config update
+      - name: Test Firebase Remote Config (Dummy Data)
+        run: |
+          VERSION="test-1.0.0"
+          VERSION_CODE="123456"
+          APK_URL="https://example.com/dummy.apk"
+
+          echo "Using dummy values:"
+          echo "VERSION=$VERSION"
+          echo "VERSION_CODE=$VERSION_CODE"
+          echo "APK_URL=$APK_URL"
+
+          # 🔹 Step 1: Get existing config + ETag
+          curl -s -D headers.txt \
+            -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
+            "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig" \
+            -o response.json
+
+          echo "Response:"
+          cat response.json
+
+          ETAG=$(grep -i etag headers.txt | tr -d '\r' | awk '{print $2}')
+          echo "ETAG=$ETAG"
+
+          if [ -z "$ETAG" ]; then
+            echo "❌ Failed to fetch ETag. Exiting..."
+            exit 1
+          fi
+
+          # 🔹 Step 2: Update config
+          curl -X PUT \
+            -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
+            -H "Content-Type: application/json; UTF-8" \
+            -H "If-Match: $ETAG" \
+            -d "{
+              \"parameters\": {
+                \"apk_download_url\": {
+                  \"defaultValue\": {
+                    \"value\": \"$APK_URL\"
+                  }
+                },
+                \"latest_version\": {
+                  \"defaultValue\": {
+                    \"value\": \"$VERSION\"
+                  }
+                },
+                \"version_code\": {
+                  \"defaultValue\": {
+                    \"value\": \"$VERSION_CODE\"
+                  }
                 }
               }
-            }
-          }" \
-          "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig"
+            }" \
+            "https://firebaseremoteconfig.googleapis.com/v1/projects/YOUR_PROJECT_ID/remoteConfig"
