@@ -56,13 +56,13 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}
 
-      # 🔢 Generate version (FIXED)
+      # 🔢 Generate version (FIXED - ignores bad tags)
       - name: Generate version
         id: version
         run: |
           git fetch --tags
 
-          LAST_TAG=$(git tag --sort=-v:refname | head -n 1)
+          LAST_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
           if [ -z "$LAST_TAG" ]; then
             VERSION="0.0.1"
@@ -78,7 +78,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
 
-      # 🔍 Debug version (helps avoid future issues)
+      # 🔍 Debug version
       - name: Debug version
         run: |
           echo "VERSION = ${{ steps.version.outputs.version }}"
@@ -118,7 +118,7 @@ jobs:
           mv android/app/build/outputs/apk/release/app-release.apk \
              app-${{ steps.version.outputs.version }}.apk
 
-      # 🏷️ Create GitHub Release (FIXED)
+      # 🏷️ Create GitHub Release (VALID TAG)
       - name: Create Release & Upload APK
         uses: softprops/action-gh-release@v1
         with:
