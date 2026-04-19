@@ -240,7 +240,7 @@ jobs:
           echo "APK_URL=$APK_URL"
 
           # 🔹 Step 1: Get existing config + ETag
-          curl -s --http1.1 -D headers.txt \
+          curl -s --compressed --http1.1 -D headers.txt \
             -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
             "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig" \
             -o response.json
@@ -250,7 +250,6 @@ jobs:
 
           echo ""
           echo "=== Debug: headers.txt ==="
-          ls -la headers.txt 2>/dev/null || echo "headers.txt does not exist!"
           cat headers.txt 2>/dev/null || echo "Cannot read headers.txt"
           echo "=== End headers ==="
 
@@ -258,32 +257,40 @@ jobs:
           echo "ETAG=$ETAG"
 
           if [ -z "$ETAG" ]; then
-            echo "❌ Failed to fetch ETag. Exiting..."
-            exit 1
+            echo "⚠️ ETag not found in headers, using wildcard '*'"
+            ETAG="*"
           fi
 
           # 🔹 Step 2: Update config
-          curl -X PUT \
+          curl -s -X PUT \
             -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
             -H "Content-Type: application/json; UTF-8" \
             -H "If-Match: $ETAG" \
+            --compressed \
             -d "{
               \"parameters\": {
-                \"apk_download_url\": {
+                \"APK_URL\": {
                   \"defaultValue\": {
                     \"value\": \"$APK_URL\"
                   }
                 },
-                \"latest_version\": {
+                \"VERSION\": {
                   \"defaultValue\": {
                     \"value\": \"$VERSION\"
                   }
                 },
-                \"version_code\": {
+                \"VERSION_CODE\": {
                   \"defaultValue\": {
                     \"value\": \"$VERSION_CODE\"
                   }
                 }
               }
             }" \
-            "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig"
+            "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig" \
+            -o update_response.json
+
+          echo ""
+          echo "=== Update Response ==="
+          cat update_response.json
+          echo ""
+
