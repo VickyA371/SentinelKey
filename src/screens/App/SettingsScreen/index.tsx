@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, ScrollView, Share, Platform } from 'react-native';
+import { View, Image, TouchableOpacity, ScrollView, Share, Platform, NativeModules } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,6 +27,9 @@ const SettingsScreen = () => {
 
   const handleLogout = async () => {
     try {
+      if (Platform.OS === 'android') {
+        NativeModules.Autofill?.cancel();
+      }
       await dispatch(clearSecuritySettings());
       await signOut(getAuth());
       dispatch(clearData());

@@ -3,6 +3,8 @@ import {
   View,
   StatusBar,
   Pressable,
+  NativeModules,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@react-native-vector-icons/feather';
@@ -79,6 +81,9 @@ const LoginScreen = () => {
           isAccountVerified: emailVerified,
         }));
         if (emailVerified) {
+          if (Platform.OS === 'android') {
+            NativeModules.Autofill?.commit();
+          }
           showSuccess('Success', 'Logged in successfully!');
         }
       }
@@ -129,6 +134,8 @@ const LoginScreen = () => {
           style={styles.input}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
+          importantForAutofill="yes"
         />
       </ValidationController>
 
@@ -156,6 +163,8 @@ const LoginScreen = () => {
           placeholderTextColor={colors.mutedBlueGray}
           style={styles.input}
           securedText
+          autoComplete="password"
+          importantForAutofill="yes"
         />
       </ValidationController>
 

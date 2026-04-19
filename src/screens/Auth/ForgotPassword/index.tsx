@@ -86,6 +86,8 @@ const ForgotPasswordScreen = () => {
             style={styles.input}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoComplete="email"
+            importantForAutofill="yes"
           />
         </ValidationController>
 

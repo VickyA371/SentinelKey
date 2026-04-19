@@ -155,6 +155,8 @@ const SignUpScreen = () => {
             placeholderTextColor={colors.mutedBlueGray}
             style={styles.input}
             autoCapitalize="none"
+            autoComplete="name"
+            importantForAutofill="yes"
           />
         </ValidationController>
 
@@ -174,6 +176,8 @@ const SignUpScreen = () => {
             style={styles.input}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoComplete="email"
+            importantForAutofill="yes"
           />
         </ValidationController>
 
@@ -193,6 +197,8 @@ const SignUpScreen = () => {
             style={styles.input}
             keyboardType="number-pad"
             autoCapitalize="none"
+            autoComplete="tel"
+            importantForAutofill="yes"
           />
         </ValidationController>
 
@@ -211,6 +217,8 @@ const SignUpScreen = () => {
             placeholderTextColor={colors.mutedBlueGray}
             style={styles.input}
             securedText
+            autoComplete="password-new"
+            importantForAutofill="yes"
           />
         </ValidationController>
 
@@ -229,6 +237,8 @@ const SignUpScreen = () => {
             placeholderTextColor={colors.mutedBlueGray}
             style={styles.input}
             securedText
+            autoComplete="password-new"
+            importantForAutofill="yes"
           />
         </ValidationController>
 
