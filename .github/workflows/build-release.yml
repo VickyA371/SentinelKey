@@ -2,8 +2,8 @@ name: Build & Release APK
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 jobs:
   build:
@@ -13,13 +13,15 @@ jobs:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
+      # 📥 Checkout
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 🟢 Node setup
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22.20.0
           cache: 'yarn'
 
       - name: Install Yarn
@@ -28,6 +30,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable || yarn install --frozen-lockfile
 
+      # ☕ Java setup
       - name: Setup Zulu JDK 17
         uses: actions/setup-java@v3
         with:
@@ -35,12 +38,14 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      # 📱 Android setup
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Accept Android licenses
         run: yes | sdkmanager --licenses
 
+      # ⚡ Gradle cache
       - name: Cache Gradle
         uses: actions/cache@v3
         with:
@@ -51,27 +56,158 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}
 
-      - name: Grant execute permission for gradlew
+      # 🔢 Generate version
+      - name: Generate version
+        id: version
+        run: |
+          git fetch --tags
+
+          LAST_TAG=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+
+          if [ -z "$LAST_TAG" ]; then
+            VERSION="0.0.1"
+          else
+            VERSION_CLEAN=${LAST_TAG#v}
+            IFS='.' read -r major minor patch <<< "$VERSION_CLEAN"
+            patch=$((patch + 1))
+            VERSION="$major.$minor.$patch"
+          fi
+
+          VERSION_CODE=$(date +%s)
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+
+      # 🔍 Debug version
+      - name: Debug version
+        run: |
+          echo "VERSION = ${{ steps.version.outputs.version }}"
+          echo "VERSION_CODE = ${{ steps.version.outputs.version_code }}"
+
+      # ✅ Validate version format
+      - name: Validate version
+        run: |
+          if [[ ! "${{ steps.version.outputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format!"
+            exit 1
+          fi
+
+      # 🔧 Update Gradle version
+      - name: Update Android version
+        run: |
+          sed -i "s/versionName \".*\"/versionName \"${{ steps.version.outputs.version }}\"/" android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode ${{ steps.version.outputs.version_code }}/" android/app/build.gradle
+
+      # 🔐 Fix gradlew permission
+      - name: Grant execute permission
         run: chmod +x android/gradlew
 
+      # 🏗️ Build APK
       - name: Build Release APK
         run: |
           cd android
           ./gradlew assembleRelease --no-daemon --parallel --build-cache
 
+      # ✅ Verify APK
       - name: Verify APK exists
         run: ls android/app/build/outputs/apk/release/
 
+      # 📦 Rename APK
       - name: Rename APK
         run: |
           mv android/app/build/outputs/apk/release/app-release.apk \
-             app-${{ github.ref_name }}.apk
+             app-${{ steps.version.outputs.version }}.apk
 
+      # 🏷️ Create GitHub Release & Upload APK
       - name: Create Release & Upload APK
         uses: softprops/action-gh-release@v1
         with:
-          files: app-${{ github.ref_name }}.apk
-          name: Release ${{ github.ref_name }}
-          body: "🚀 APK release for version ${{ github.ref_name }}"
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          files: app-${{ steps.version.outputs.version }}.apk
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 🔐 Authenticate with Google Cloud
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      # ☁️ Setup gcloud CLI
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: sentinel-key
+
+      # 🔑 Get access token
+      - name: Get Access Token
+        id: token
+        run: |
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          echo "token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
+
+      # 🔄 Update Firebase Remote Config
+      - name: Update Firebase Remote Config
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VERSION_CODE="${{ steps.version.outputs.version_code }}"
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/app-$VERSION.apk"
+
+          echo "📦 Updating Remote Config:"
+          echo "  VERSION=$VERSION"
+          echo "  VERSION_CODE=$VERSION_CODE"
+          echo "  APK_URL=$APK_URL"
+
+          # 🔹 Step 1: Get existing config + ETag
+          curl -s --compressed --http1.1 -D headers.txt \
+            -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
+            "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig" \
+            -o response.json
+
+          ETAG=$(grep -i 'etag' headers.txt | tr -d '\r' | sed 's/.*: *//')
+
+          if [ -z "$ETAG" ]; then
+            echo "⚠️ ETag not found in headers, using wildcard"
+            ETAG="*"
+          else
+            echo "✅ ETag: $ETAG"
+          fi
+
+          # 🔹 Step 2: Update config
+          HTTP_STATUS=$(curl -s -o update_response.json -w "%{http_code}" -X PUT \
+            -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
+            -H "Content-Type: application/json; UTF-8" \
+            -H "If-Match: $ETAG" \
+            --compressed \
+            -d "{
+              \"parameters\": {
+                \"APK_URL\": {
+                  \"defaultValue\": {
+                    \"value\": \"$APK_URL\"
+                  }
+                },
+                \"VERSION\": {
+                  \"defaultValue\": {
+                    \"value\": \"$VERSION\"
+                  }
+                },
+                \"VERSION_CODE\": {
+                  \"defaultValue\": {
+                    \"value\": \"$VERSION_CODE\"
+                  }
+                }
+              }
+            }" \
+            "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig")
+
+          echo "HTTP Status: $HTTP_STATUS"
+          cat update_response.json
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "❌ Failed to update Remote Config (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
+
+          echo "✅ Firebase Remote Config updated successfully!"
