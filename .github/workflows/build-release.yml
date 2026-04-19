@@ -248,7 +248,13 @@ jobs:
           echo "Response:"
           cat response.json
 
-          ETAG=$(grep -i etag headers.txt | tr -d '\r' | awk '{print $2}')
+          echo ""
+          echo "=== Debug: headers.txt ==="
+          ls -la headers.txt 2>/dev/null || echo "headers.txt does not exist!"
+          cat headers.txt 2>/dev/null || echo "Cannot read headers.txt"
+          echo "=== End headers ==="
+
+          ETAG=$(grep -i 'etag' headers.txt | tr -d '\r' | sed 's/.*: *//')
           echo "ETAG=$ETAG"
 
           if [ -z "$ETAG" ]; then
