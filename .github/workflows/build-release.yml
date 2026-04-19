@@ -3,7 +3,7 @@ name: Build & Release APK
 on:
   push:
     branches:
-      - ci_cd_implementation
+      - main
 
 jobs:
   build:
