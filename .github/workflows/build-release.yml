@@ -240,7 +240,7 @@ jobs:
           echo "APK_URL=$APK_URL"
 
           # 🔹 Step 1: Get existing config + ETag
-          curl -s -D headers.txt \
+          curl -s --http1.1 -D headers.txt \
             -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
             "https://firebaseremoteconfig.googleapis.com/v1/projects/sentinel-key/remoteConfig" \
             -o response.json
