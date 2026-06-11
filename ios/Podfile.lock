@@ -2872,8 +2872,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-vector-icons-feather (12.4.3)
-  - react-native-vector-icons-ionicons (12.4.3)
+  - react-native-vector-icons-feather (12.5.0)
+  - react-native-vector-icons-ionicons (12.5.0)
   - React-NativeModulesApple (0.84.0):
     - hermes-engine
     - React-callinvoker
@@ -3378,7 +3378,7 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNGestureHandler (2.30.0):
+  - RNGestureHandler (2.31.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3423,7 +3423,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNReanimated (4.2.2):
+  - RNReanimated (4.3.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3445,10 +3445,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/reanimated (= 4.2.2)
+    - RNReanimated/apple (= 4.3.0)
+    - RNReanimated/common (= 4.3.0)
     - RNWorklets
     - Yoga
-  - RNReanimated/reanimated (4.2.2):
+  - RNReanimated/apple (4.3.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3470,10 +3471,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/reanimated/apple (= 4.2.2)
     - RNWorklets
     - Yoga
-  - RNReanimated/reanimated/apple (4.2.2):
+  - RNReanimated/common (4.3.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3544,7 +3544,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets (0.7.4):
+  - RNWorklets (0.8.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3566,9 +3566,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/worklets (= 0.7.4)
+    - RNWorklets/apple (= 0.8.1)
+    - RNWorklets/common (= 0.8.1)
     - Yoga
-  - RNWorklets/worklets (0.7.4):
+  - RNWorklets/apple (0.8.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3590,9 +3591,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/worklets/apple (= 0.7.4)
     - Yoga
-  - RNWorklets/worklets/apple (0.7.4):
+  - RNWorklets/common (0.8.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -4008,8 +4008,8 @@ SPEC CHECKSUMS:
   react-native-aes: 0cad0a1f0087171b4af762c39d7199716d9335b5
   react-native-biometrics: 43ed5b828646a7862dbc7945556446be00798e7d
   react-native-safe-area-context: 90476586077446d5eab1d41ac3e767b016ac41d6
-  react-native-vector-icons-feather: edb1deb1a1588b6b037e5351e7c69da05fdaf72a
-  react-native-vector-icons-ionicons: 5edcb84ec72c42601fef1c2251e3fd14a79823c4
+  react-native-vector-icons-feather: 24d5a788448daee58371663c440300e185b7ee7e
+  react-native-vector-icons-ionicons: 7e633927db6ab96e0255b5920c053777cacca505
   React-NativeModulesApple: 44a9474594566cd03659f92e38f42599c6b9dee4
   React-networking: f5f2a5b571ec873b5332ffee0b5d318ec365de5b
   React-oscompat: b924b8609d06899f00ab1aa813b0cde9c5e12771
@@ -4050,11 +4050,11 @@ SPEC CHECKSUMS:
   RNFBAuth: 6684273e151d09c0ff547dcc0b97a33128bc845a
   RNFBCrashlytics: 1ff12a1d04c0c2d9a26059f77d8f764583a09d2e
   RNFBFirestore: 86377218c964c0ee657b1c9f50c02f56a70f9bd1
-  RNGestureHandler: d9e942967ed2a9a555c41591c4ee9dfeabee1f01
+  RNGestureHandler: 88b46a372c2823029c528ff163a12eccbcc7e000
   RNKeychain: ce2cee63eab83888c3da68684da50b9c83c33461
-  RNReanimated: e8365b1438aba0119ea2656b56e70b9a1708b930
+  RNReanimated: 46aa0432d0a44ce978333713d1db0cbe706d5c41
   RNScreens: ca829379d20b0d1ff41a0b87bc37bdc50276cef5
-  RNWorklets: 30f9a363d681c776a5f9d74f6d21a6d1bb7bfe80
+  RNWorklets: bc32c788b41ef5f9ee519d6bf3f495b73fb7741b
   SplashView: d06c2b10d3ef5a9600ea06201d8267f018b37dcf
   Yoga: 8f4ecfe9609f26267e75aa961f031fbb525d8e52
 
