@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import {
-  View,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Ionicons from '@react-native-vector-icons/ionicons';
 import Icon from '@react-native-vector-icons/feather';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { createUserWithEmailAndPassword, getAuth } from '@react-native-firebase/auth';
@@ -19,6 +17,7 @@ import { showSuccess, showError } from '../../../utils/toast';
 // components
 import AppText from '../../../components/Common/AppText';
 import AppInput from '../../../components/Common/AppInput';
+import AppCheckbox from '../../../components/Common/AppCheckbox';
 import ValidationController from '../../../components/Common/ValidationController';
 import AppHeader from '../../../components/Common/AppHeader';
 import AuthHeader from '../../../components/Common/AuthHeader';
@@ -55,17 +54,11 @@ const SignUpScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<AuthScreensPropTypes>>();
   const dispatch = useDispatch();
 
-  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const form = useForm<SignupFormValues>(hookFormParams)
 
   const onValidFormSubmission = async (validFormData: SignupFormValues) => {
-    if (!agreed) {
-      showError('Error', 'Please agree to the Terms of Service and Privacy Policy.');
-      return;
-    }
-
     setLoading(true);
     try {
       const { email, password, fullName, phoneNumber } = validFormData;
@@ -233,24 +226,17 @@ const SignUpScreen = () => {
         </ValidationController>
 
         {/* Terms */}
-        <View style={styles.termsContainer}>
-          <TouchableOpacity
-            style={[
-              styles.checkbox,
-              agreed && styles.checkboxChecked,
-            ]}
-            onPress={() => setAgreed(!agreed)}
-          >
-            {agreed && (
-              <Ionicons name="checkmark" size={14} color={colors.white} />
-            )}
-          </TouchableOpacity>
-          <AppText style={styles.termsText}>
+        <ValidationController
+          control={form.control}
+          name={'termsAndConditionsAccepted'}
+          changeHandlerKey='onChange'
+        >
+          <AppCheckbox containerStyle={styles.termsContainer}>
             {'By creating an account, you agree to our '}
             <AppText style={styles.link}>{"Terms of Service"}</AppText>{' and '}
             <AppText style={styles.link}>{"Privacy Policy"}</AppText>.
-          </AppText>
-        </View>
+          </AppCheckbox>
+        </ValidationController>
 
         {/* Button */}
         <TouchableOpacity
@@ -303,29 +289,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   termsContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     marginBottom: 25,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderColor: colors.mutedTeal,
-    borderRadius: 4,
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  checkboxChecked: {
-    backgroundColor: colors.deepTeal,
-    borderColor: colors.mutedBlueGray,
-  },
-  termsText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.mutedTeal,
   },
   link: {
     color: colors.deepTeal,
