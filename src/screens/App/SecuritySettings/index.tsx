@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, ScrollView, Switch, Alert } from 'react-native';
+import { View, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { useSelector, useDispatch } from 'react-redux';

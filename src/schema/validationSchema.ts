@@ -47,6 +47,19 @@ export const addListItemSchema = yup.object({
   category: yup.string().required('Category is required'),
 }).required();
 
+export const createMasterPasswordSchema = yup.object({
+  masterPassword: yup.string()
+    .min(10, 'Master password must be at least 10 characters')
+    .required('Master password is required'),
+  confirmMasterPassword: yup.string()
+    .oneOf([yup.ref('masterPassword')], 'Passwords must match')
+    .required('Please confirm your master password'),
+}).required();
+
+export const unlockVaultSchema = yup.object({
+  masterPassword: yup.string().required('Master password is required'),
+}).required();
+
 export const profileDetailsSchema = yup.object({
   fullName: yup.string().required('Full Name is required'),
   phoneNumber: yup.string().required('Phone Number is required'),

@@ -12,9 +12,13 @@ import {
   setBiometricAuthenticated,
   clearSecuritySettings,
 } from '../store/slices/securitySlice';
+import { refreshVaultStatus, resetVault } from '../store/slices/vaultSlice';
+import { lockVault } from '../utils/vault';
 import { View, ActivityIndicator, Linking } from 'react-native';
 import colors from '../constants/colors';
 import BiometricGateScreen from '../components/Common/BiometricGateScreen';
+import VaultSetupScreen from '../screens/Vault/VaultSetup';
+import VaultUnlockScreen from '../screens/Vault/VaultUnlock';
 
 // auth screens
 import LoginScreen from '../screens/Auth/Login';
@@ -136,15 +140,24 @@ const RootNavigation = () => {
   const { fingerprintAccessEnabled, biometricAuthenticated, isLoaded } = useSelector(
     (state: RootState) => state.security,
   );
+  const vaultStatus = useSelector((state: RootState) => state.vault.status);
+  const uid = useSelector((state: RootState) => state.auth.uid);
   const isLoggedIn = useSelector((state: RootState) => {
-    const { uid, isAccountVerified } = state.auth;
-    return !!uid && !!isAccountVerified;
+    const { uid: id, isAccountVerified } = state.auth;
+    return !!id && !!isAccountVerified;
   });
 
   // Load security settings from AsyncStorage
   useEffect(() => {
     dispatch(loadSecuritySettings());
   }, [dispatch]);
+
+  // Determine the vault gate status once the user is logged in + verified.
+  useEffect(() => {
+    if (isLoggedIn && uid) {
+      dispatch(refreshVaultStatus(uid));
+    }
+  }, [isLoggedIn, uid, dispatch]);
 
   useEffect(() => {
     // Handle email verification deep link (app opened from verification email with handleCodeInApp)
@@ -180,6 +193,10 @@ const RootNavigation = () => {
           setInitializing(false);
         }
       } else {
+        // Signed out: drop the in-memory vault key and reset gate state.
+        // (W stays on the server so the vault survives re-login.)
+        lockVault();
+        dispatch(resetVault());
         dispatch(clearSecuritySettings());
         dispatch(clearData());
         setInitializing(false);
@@ -195,6 +212,24 @@ const RootNavigation = () => {
         <ActivityIndicator size="large" color={colors.deepTeal} />
       </View>
     );
+  }
+
+  // Vault gate: a logged-in user must set up or unlock their encrypted vault
+  // before any app screen (and its decrypting Firestore listeners) mounts.
+  if (isLoggedIn) {
+    if (vaultStatus === 'unknown') {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.offWhiteBlueGray }}>
+          <ActivityIndicator size="large" color={colors.deepTeal} />
+        </View>
+      );
+    }
+    if (vaultStatus === 'needsSetup') {
+      return <VaultSetupScreen />;
+    }
+    if (vaultStatus === 'locked') {
+      return <VaultUnlockScreen />;
+    }
   }
 
   // Show biometric gate if: user is logged in + fingerprint access is enabled + not yet authenticated this session
