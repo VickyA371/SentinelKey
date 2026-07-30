@@ -3,7 +3,6 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
@@ -17,6 +16,7 @@ import { useForm } from 'react-hook-form';
 import { RootState } from '../../../store';
 import { setData } from '../../../store/slices/authSlice';
 import { showSuccess, showError } from '../../../utils/toast';
+import { logDev } from '../../../utils/logger';
 
 // components
 import AppText from '../../../components/Common/AppText';
@@ -84,7 +84,7 @@ const ProfileDetailsScreen = () => {
   };
 
   const onInvalidFormSubmission = (invalidFormData: unknown) => {
-    console.log('invalidFormData :: ', invalidFormData);
+    logDev('invalidFormData :: ', invalidFormData);
   };
 
   return (

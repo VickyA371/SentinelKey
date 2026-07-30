@@ -12,6 +12,7 @@ import firestore from '@react-native-firebase/firestore';
 import { useDispatch } from 'react-redux';
 import { setData } from '../../../store/slices/authSlice';
 import { showSuccess, showError } from '../../../utils/toast';
+import { logDev } from '../../../utils/logger';
 import { useState } from 'react';
 
 // hooks
@@ -97,7 +98,7 @@ const LoginScreen = () => {
   }
 
   const onInvalidFormSubmission = (invalidFormData: unknown) => {
-    console.log('invalidFormData :: ', invalidFormData)
+    logDev('invalidFormData :: ', invalidFormData)
   }
 
   const handleCreateAccount = () => {
