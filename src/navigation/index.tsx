@@ -1,7 +1,7 @@
 import { createStaticNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSelector, useDispatch } from 'react-redux';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { COLLECTIONS } from '../constants/firebase';
@@ -12,9 +12,9 @@ import {
   clearSecuritySettings,
 } from '../store/slices/securitySlice';
 import { refreshVaultStatus, resetVault } from '../store/slices/vaultSlice';
-import { lockVault } from '../utils/vault';
+import { lockVault, isVaultUnlocked } from '../utils/vault';
 import { disableBiometricUnlock } from '../utils/biometricVault';
-import { View, ActivityIndicator, Linking } from 'react-native';
+import { View, ActivityIndicator, Linking, AppState, type AppStateStatus } from 'react-native';
 import colors from '../constants/colors';
 import VaultSetupScreen from '../screens/Vault/VaultSetup';
 import VaultUnlockScreen from '../screens/Vault/VaultUnlock';
@@ -92,6 +92,10 @@ const InternalNavigation = createStaticNavigation(RootStack);
 
 const VERIFY_DEEP_LINK_PREFIX = 'sentinelkey://verified';
 
+// Re-lock the vault if the app has been in the background at least this long.
+// Set to 0 to lock immediately on backgrounding.
+const AUTO_LOCK_AFTER_MS = 60_000;
+
 function parseOobCodeFromUrl(url: string): string | null {
   if (!url || !url.startsWith(VERIFY_DEEP_LINK_PREFIX)) return null;
   try {
@@ -154,6 +158,31 @@ const RootNavigation = () => {
       dispatch(refreshVaultStatus(uid));
     }
   }, [isLoggedIn, uid, dispatch]);
+
+  // Auto-lock the vault after the app has been backgrounded for a grace period.
+  const backgroundedAt = useRef<number | null>(null);
+  useEffect(() => {
+    const handleAppStateChange = (next: AppStateStatus) => {
+      if (next === 'background' || next === 'inactive') {
+        if (backgroundedAt.current === null) backgroundedAt.current = Date.now();
+        return;
+      }
+      if (next === 'active') {
+        const since = backgroundedAt.current;
+        backgroundedAt.current = null;
+        if (since === null) return;
+        const awayMs = Date.now() - since;
+        if (awayMs >= AUTO_LOCK_AFTER_MS && isVaultUnlocked()) {
+          // Drop the in-memory DEK and send the user back to the unlock screen.
+          // refreshVaultStatus re-reads the meta and flips the gate to 'locked'.
+          lockVault();
+          if (uid) dispatch(refreshVaultStatus(uid));
+        }
+      }
+    };
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [uid, dispatch]);
 
   useEffect(() => {
     // Handle email verification deep link (app opened from verification email with handleCodeInApp)
