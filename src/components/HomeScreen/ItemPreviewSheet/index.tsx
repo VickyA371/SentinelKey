@@ -44,8 +44,16 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [decryptedPassword, setDecryptedPassword] = useState("");
     const [pwPromptVisible, setPwPromptVisible] = useState(false);
-    // Action to run after the master password is verified (view or copy).
+    const [promptMessage, setPromptMessage] = useState("");
+    // Action to run after the master password is verified.
     const pendingActionRef = useRef<(() => void) | null>(null);
+
+    // Gate a sensitive action behind master-password verification.
+    const requireMasterPassword = (action: () => void, message: string) => {
+        pendingActionRef.current = action;
+        setPromptMessage(message);
+        setPwPromptVisible(true);
+    };
 
     React.useEffect(() => {
         const fetchDecryptedPassword = async () => {
@@ -71,8 +79,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         // If Enhanced Privacy is enabled and this is a password field, require
         // the master password before copying.
         if (isPassword && enhancedPrivacyEnabled) {
-            pendingActionRef.current = doCopy;
-            setPwPromptVisible(true);
+            requireMasterPassword(doCopy, 'Enter your master password to copy this password.');
             return;
         }
         doCopy();
@@ -86,8 +93,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         }
         // Revealing with Enhanced Privacy on — require the master password.
         if (enhancedPrivacyEnabled) {
-            pendingActionRef.current = () => setShowPassword(true);
-            setPwPromptVisible(true);
+            requireMasterPassword(() => setShowPassword(true), 'Enter your master password to view this password.');
             return;
         }
         setShowPassword(true);
@@ -116,12 +122,18 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     );
 
     const handleEdit = () => {
-        onClose();
-        navigation.navigate("AddListItem", { item });
+        // Editing is a sensitive action — always confirm identity first.
+        requireMasterPassword(() => {
+            onClose();
+            navigation.navigate("AddListItem", { item });
+        }, 'Enter your master password to edit this item.');
     };
 
     const handleDeletePress = () => {
-        setDeleteModalVisible(true);
+        // Confirm identity before showing the delete confirmation.
+        requireMasterPassword(() => {
+            setDeleteModalVisible(true);
+        }, 'Enter your master password to delete this item.');
     };
 
     const handleConfirmDelete = async () => {
@@ -222,7 +234,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
 
             <MasterPasswordPrompt
                 visible={pwPromptVisible}
-                message="Enter your master password to view or copy this password."
+                message={promptMessage}
                 onCancel={handlePromptCancel}
                 onSuccess={handlePromptSuccess}
             />
