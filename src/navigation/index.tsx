@@ -9,14 +9,13 @@ import { RootState, AppDispatch } from '../store';
 import { setData, clearData } from '../store/slices/authSlice';
 import {
   loadSecuritySettings,
-  setBiometricAuthenticated,
   clearSecuritySettings,
 } from '../store/slices/securitySlice';
 import { refreshVaultStatus, resetVault } from '../store/slices/vaultSlice';
 import { lockVault } from '../utils/vault';
+import { disableBiometricUnlock } from '../utils/biometricVault';
 import { View, ActivityIndicator, Linking } from 'react-native';
 import colors from '../constants/colors';
-import BiometricGateScreen from '../components/Common/BiometricGateScreen';
 import VaultSetupScreen from '../screens/Vault/VaultSetup';
 import VaultUnlockScreen from '../screens/Vault/VaultUnlock';
 
@@ -137,9 +136,6 @@ const RootNavigation = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [initializing, setInitializing] = useState(true);
 
-  const { fingerprintAccessEnabled, biometricAuthenticated, isLoaded } = useSelector(
-    (state: RootState) => state.security,
-  );
   const vaultStatus = useSelector((state: RootState) => state.vault.status);
   const uid = useSelector((state: RootState) => state.auth.uid);
   const isLoggedIn = useSelector((state: RootState) => {
@@ -193,9 +189,10 @@ const RootNavigation = () => {
           setInitializing(false);
         }
       } else {
-        // Signed out: drop the in-memory vault key and reset gate state.
-        // (W stays on the server so the vault survives re-login.)
+        // Signed out: drop the in-memory vault key, wipe the device-local
+        // biometric DEK (it's tied to this user's vault), and reset gate state.
         lockVault();
+        disableBiometricUnlock();
         dispatch(resetVault());
         dispatch(clearSecuritySettings());
         dispatch(clearData());
@@ -206,7 +203,7 @@ const RootNavigation = () => {
     return unsubscribe;
   }, [dispatch]);
 
-  if (initializing || (fingerprintAccessEnabled && biometricAuthenticated ? !isLoaded : false)) {
+  if (initializing) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.offWhiteBlueGray }}>
         <ActivityIndicator size="large" color={colors.deepTeal} />
@@ -230,15 +227,6 @@ const RootNavigation = () => {
     if (vaultStatus === 'locked') {
       return <VaultUnlockScreen />;
     }
-  }
-
-  // Show biometric gate if: user is logged in + fingerprint access is enabled + not yet authenticated this session
-  if (isLoggedIn && fingerprintAccessEnabled && !biometricAuthenticated) {
-    return (
-      <BiometricGateScreen
-        onAuthenticated={() => dispatch(setBiometricAuthenticated(true))}
-      />
-    );
   }
 
   return <InternalNavigation />;

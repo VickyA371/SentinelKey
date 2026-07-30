@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, StatusBar, Pressable } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, StatusBar, Pressable, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@react-native-vector-icons/feather';
 import { useForm } from 'react-hook-form';
@@ -16,6 +16,7 @@ import ValidationController from '../../../components/Common/ValidationControlle
 import colors from '../../../constants/colors';
 import { showError } from '../../../utils/toast';
 import { unlockVault } from '../../../utils/vault';
+import { isBiometricUnlockEnabled, unlockWithBiometrics } from '../../../utils/biometricVault';
 import { RootState } from '../../../store';
 import { setVaultStatus } from '../../../store/slices/vaultSlice';
 import { unlockVaultSchema } from '../../../schema/validationSchema';
@@ -28,11 +29,39 @@ const VaultUnlockScreen = () => {
   const dispatch = useDispatch();
   const meta = useSelector((state: RootState) => state.vault.meta);
   const [loading, setLoading] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const autoPrompted = useRef(false);
 
   const form = useForm<FormValues>({
     defaultValues: { masterPassword: '' },
     resolver: yupResolver(unlockVaultSchema),
   });
+
+  const tryBiometricUnlock = async () => {
+    const ok = await unlockWithBiometrics();
+    if (ok) {
+      dispatch(setVaultStatus('unlocked'));
+    }
+    // On failure we stay on the master-password screen (fail closed).
+  };
+
+  // Offer biometric unlock if enrolled, and auto-prompt once on mount.
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const enabled = await isBiometricUnlockEnabled();
+      if (!mounted) return;
+      setBiometricEnabled(enabled);
+      if (enabled && !autoPrompted.current) {
+        autoPrompted.current = true;
+        tryBiometricUnlock();
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit = async (data: FormValues) => {
     if (!meta) {
@@ -93,6 +122,13 @@ const VaultUnlockScreen = () => {
         disabled={loading}
       />
 
+      {biometricEnabled && (
+        <TouchableOpacity style={styles.biometricButton} onPress={tryBiometricUnlock}>
+          <Icon name="unlock" size={18} color={colors.deepTeal} />
+          <AppText style={styles.biometricText}>{'Unlock with biometrics'}</AppText>
+        </TouchableOpacity>
+      )}
+
       <Pressable onPress={handleLogout} style={styles.footer}>
         <AppText style={styles.footerText}>{'Log out'}</AppText>
       </Pressable>
@@ -141,6 +177,19 @@ const styles = StyleSheet.create({
     height: 50,
     marginBottom: 15,
     backgroundColor: colors.white,
+  },
+  biometricButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 10,
+  },
+  biometricText: {
+    fontSize: 14,
+    color: colors.deepTeal,
+    fontWeight: '600',
   },
   footer: {
     alignItems: 'center',

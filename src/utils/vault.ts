@@ -42,6 +42,19 @@ let sessionKey: KeyMaterial | null = null;
 /** Whether the vault is currently unlocked (DEK present in memory). */
 export const isVaultUnlocked = (): boolean => sessionKey !== null;
 
+/**
+ * The raw 128-hex DEK for the current session, or null if locked. Exposed ONLY
+ * so it can be handed to hardware-backed biometric storage; never log, persist
+ * in plaintext, or send it anywhere.
+ */
+export const getSessionDekHex = (): string | null =>
+    sessionKey ? sessionKey.encKeyHex + sessionKey.macKeyHex : null;
+
+/** Start the in-memory session from a raw DEK hex (e.g. from biometric storage). */
+export const setVaultSession = (dekHex: string): void => {
+    sessionKey = splitKeyMaterial(dekHex);
+};
+
 /** Drop the in-memory DEK. Call on logout, lock, and session expiry. */
 export const lockVault = (): void => {
     sessionKey = null;
@@ -90,6 +103,24 @@ export const unlockVault = async (masterPassword: string, meta: VaultMeta): Prom
     } catch {
         // MAC / decrypt failure == wrong master password. Fail closed.
         sessionKey = null;
+        return false;
+    }
+};
+
+/**
+ * Verify a master password against the stored meta WITHOUT changing the session.
+ * Used to re-confirm the user's identity for sensitive in-app actions (e.g.
+ * revealing/copying a password when Enhanced Privacy is on).
+ */
+export const verifyMasterPassword = async (
+    masterPassword: string,
+    meta: VaultMeta,
+): Promise<boolean> => {
+    const masterKey = await deriveKeyMaterial(masterPassword, meta.saltHex, meta.kdfIterations);
+    try {
+        await open(meta.wrappedKey, masterKey);
+        return true;
+    } catch {
         return false;
     }
 };

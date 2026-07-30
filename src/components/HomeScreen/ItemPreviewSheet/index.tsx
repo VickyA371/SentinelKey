@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { showSuccess, showError } from "../../../utils/toast";
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
@@ -11,6 +11,7 @@ import { useSelector } from 'react-redux';
 import AppText from "../../Common/AppText";
 import CommonAlert from "../../Common/CommonAlert";
 import alertStyles from "../../Common/CommonAlert/styles";
+import MasterPasswordPrompt from "../../Common/MasterPasswordPrompt";
 import auth from '@react-native-firebase/auth';
 
 // constants
@@ -23,7 +24,6 @@ import { RootState } from "../../../store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { decrypt } from "../../../utils/crypto";
-import { promptBiometric } from "../../../utils/biometrics";
 import Clipboard from '@react-native-clipboard/clipboard';
 import { categoriesMap } from "../../AddListItem/CategoryPickerSheet";
 
@@ -43,6 +43,9 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     const [showPassword, setShowPassword] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [decryptedPassword, setDecryptedPassword] = useState("");
+    const [pwPromptVisible, setPwPromptVisible] = useState(false);
+    // Action to run after the master password is verified (view or copy).
+    const pendingActionRef = useRef<(() => void) | null>(null);
 
     React.useEffect(() => {
         const fetchDecryptedPassword = async () => {
@@ -60,23 +63,46 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     const handleCopy = async (textToCopy: string, label: string, isPassword: boolean = false) => {
         if (!textToCopy) return;
 
-        // If Enhanced Privacy is enabled and this is a password field, require biometric
-        if (isPassword && enhancedPrivacyEnabled) {
-            const { success } = await promptBiometric('Authenticate to copy password');
-            if (!success) return;
-        }
+        const doCopy = () => {
+            Clipboard.setString(textToCopy);
+            showSuccess('Copied', `${label} copied to clipboard`);
+        };
 
-        Clipboard.setString(textToCopy);
-        showSuccess('Copied', `${label} copied to clipboard`);
+        // If Enhanced Privacy is enabled and this is a password field, require
+        // the master password before copying.
+        if (isPassword && enhancedPrivacyEnabled) {
+            pendingActionRef.current = doCopy;
+            setPwPromptVisible(true);
+            return;
+        }
+        doCopy();
     };
 
     const handleTogglePasswordVisibility = async () => {
-        if (!showPassword && enhancedPrivacyEnabled) {
-            // Revealing password — require biometric
-            const { success } = await promptBiometric('Authenticate to view password');
-            if (!success) return;
+        // Hiding never needs verification.
+        if (showPassword) {
+            setShowPassword(false);
+            return;
         }
-        setShowPassword(!showPassword);
+        // Revealing with Enhanced Privacy on — require the master password.
+        if (enhancedPrivacyEnabled) {
+            pendingActionRef.current = () => setShowPassword(true);
+            setPwPromptVisible(true);
+            return;
+        }
+        setShowPassword(true);
+    };
+
+    const handlePromptSuccess = () => {
+        setPwPromptVisible(false);
+        const action = pendingActionRef.current;
+        pendingActionRef.current = null;
+        action?.();
+    };
+
+    const handlePromptCancel = () => {
+        setPwPromptVisible(false);
+        pendingActionRef.current = null;
     };
 
     const renderBackdrop = useCallback(
@@ -192,6 +218,13 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
                 icon="warning"
                 onClose={() => setDeleteModalVisible(false)}
                 onConfirm={handleConfirmDelete}
+            />
+
+            <MasterPasswordPrompt
+                visible={pwPromptVisible}
+                message="Enter your master password to view or copy this password."
+                onCancel={handlePromptCancel}
+                onSuccess={handlePromptSuccess}
             />
         </>
     );

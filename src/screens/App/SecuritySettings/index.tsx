@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@react-native-vector-icons/ionicons';
@@ -6,63 +6,99 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import AppText from '../../../components/Common/AppText';
 import AppHeader from '../../../components/Common/AppHeader';
+import MasterPasswordPrompt from '../../../components/Common/MasterPasswordPrompt';
 
 import colors from '../../../constants/colors';
 import styles from './styles';
 
 import { RootState, AppDispatch } from '../../../store';
 import {
-  setFingerprintAccess,
   setEnhancedPrivacy,
-  persistSecuritySetting,
+  persistEnhancedPrivacy,
 } from '../../../store/slices/securitySlice';
-import { isBiometricAvailable, promptBiometric } from '../../../utils/biometrics';
-import { showError } from '../../../utils/toast';
+import { isBiometricAvailable } from '../../../utils/biometrics';
+import { isVaultUnlocked } from '../../../utils/vault';
+import {
+  isBiometricUnlockEnabled,
+  enableBiometricUnlock,
+  disableBiometricUnlock,
+} from '../../../utils/biometricVault';
+import { showError, showSuccess } from '../../../utils/toast';
 
 const SecuritySettingsScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { fingerprintAccessEnabled, enhancedPrivacyEnabled } = useSelector(
-    (state: RootState) => state.security,
+  const enhancedPrivacyEnabled = useSelector(
+    (state: RootState) => state.security.enhancedPrivacyEnabled,
   );
+  const [biometricVaultEnabled, setBiometricVaultEnabled] = useState(false);
+  const [pwPromptVisible, setPwPromptVisible] = useState(false);
+  // The Enhanced Privacy value to apply once the master password is verified.
+  const pendingPrivacyValueRef = useRef<boolean | null>(null);
 
-  const handleFingerprintToggle = useCallback(async (newValue: boolean) => {
-    if (newValue) {
-      // Enabling — verify biometrics first
-      const available = await isBiometricAvailable();
-      if (!available) {
-        showError('Unavailable', 'No biometric authentication is set up on this device.');
-        return;
-      }
+  useEffect(() => {
+    let mounted = true;
+    isBiometricUnlockEnabled().then((enabled) => {
+      if (mounted) setBiometricVaultEnabled(enabled);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-      const { success } = await promptBiometric('Authenticate to enable Fingerprint Access');
-      if (!success) {
-        return; // cancelled or failed
-      }
-    }
+  // Toggling Enhanced Privacy (either direction) requires the master password:
+  // turning it OFF must be protected, or the restriction is trivially bypassed.
+  const handlePrivacyToggle = useCallback((newValue: boolean) => {
+    pendingPrivacyValueRef.current = newValue;
+    setPwPromptVisible(true);
+  }, []);
 
-    dispatch(setFingerprintAccess(newValue));
-    await persistSecuritySetting('fingerprint', newValue);
-  }, [dispatch]);
-
-  const handlePrivacyToggle = useCallback(async (newValue: boolean) => {
-    if (newValue) {
-      // Enabling — verify biometrics first
-      const available = await isBiometricAvailable();
-      if (!available) {
-        showError('Unavailable', 'No biometric authentication is set up on this device.');
-        return;
-      }
-
-      const { success } = await promptBiometric('Authenticate to enable Enhanced Privacy');
-      if (!success) {
-        return; // cancelled or failed
-      }
-    }
-
+  const applyPrivacyChange = useCallback(async () => {
+    setPwPromptVisible(false);
+    const newValue = pendingPrivacyValueRef.current;
+    pendingPrivacyValueRef.current = null;
+    if (newValue === null) return;
     dispatch(setEnhancedPrivacy(newValue));
-    await persistSecuritySetting('privacy', newValue);
+    await persistEnhancedPrivacy(newValue);
+    showSuccess(
+      newValue ? 'Enhanced Privacy on' : 'Enhanced Privacy off',
+      newValue
+        ? 'Your master password is now required to view or copy passwords.'
+        : 'Passwords can now be viewed and copied without extra confirmation.',
+    );
   }, [dispatch]);
+
+  const cancelPrivacyChange = useCallback(() => {
+    setPwPromptVisible(false);
+    pendingPrivacyValueRef.current = null;
+  }, []);
+
+  const handleBiometricVaultToggle = useCallback(async (newValue: boolean) => {
+    if (newValue) {
+      const available = await isBiometricAvailable();
+      if (!available) {
+        showError('Unavailable', 'No biometric authentication is set up on this device.');
+        return;
+      }
+      // Enrollment stores the in-memory DEK; the vault must be unlocked (it is,
+      // since we're inside the app past the gate).
+      if (!isVaultUnlocked()) {
+        showError('Vault locked', 'Please unlock your vault before enabling biometric unlock.');
+        return;
+      }
+      try {
+        await enableBiometricUnlock();
+        setBiometricVaultEnabled(true);
+        showSuccess('Enabled', 'You can now unlock your vault with biometrics.');
+      } catch (error) {
+        showError('Error', 'Could not enable biometric unlock. Please try again.');
+      }
+      return;
+    }
+    await disableBiometricUnlock();
+    setBiometricVaultEnabled(false);
+    showSuccess('Disabled', 'Biometric unlock removed from this device.');
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,25 +124,6 @@ const SecuritySettingsScreen = () => {
           <AppText style={styles.sectionTitle}>{"Security Features"}</AppText>
 
           <View style={styles.featuresList}>
-            {/* Fingerprint Card */}
-            <View style={styles.featureCard}>
-              <View style={styles.featureLeft}>
-                <View style={styles.featureIconContainer}>
-                  <Ionicons name="finger-print" size={24} color={colors.deepTeal} />
-                </View>
-                <View style={styles.featureTextContainer}>
-                  <AppText style={styles.featureTitle}>{"Fingerprint Access"}</AppText>
-                  <AppText style={styles.featureSubtitle}>{"Require biometric authentication to open the app"}</AppText>
-                </View>
-              </View>
-              <Switch
-                value={fingerprintAccessEnabled}
-                onValueChange={handleFingerprintToggle}
-                trackColor={{ false: colors.iceGray, true: colors.deepTeal }}
-                thumbColor={colors.white}
-              />
-            </View>
-
             {/* Privacy Card */}
             <View style={styles.featureCard}>
               <View style={styles.featureLeft}>
@@ -115,7 +132,7 @@ const SecuritySettingsScreen = () => {
                 </View>
                 <View style={styles.featureTextContainer}>
                   <AppText style={styles.featureTitle}>{"Enhanced Privacy"}</AppText>
-                  <AppText style={styles.featureSubtitle}>{"Require biometric to view or copy passwords"}</AppText>
+                  <AppText style={styles.featureSubtitle}>{"Require your master password to view or copy passwords"}</AppText>
                 </View>
               </View>
               <Switch
@@ -125,9 +142,36 @@ const SecuritySettingsScreen = () => {
                 thumbColor={colors.white}
               />
             </View>
+
+            {/* Biometric Vault Unlock Card */}
+            <View style={styles.featureCard}>
+              <View style={styles.featureLeft}>
+                <View style={styles.featureIconContainer}>
+                  <Ionicons name="finger-print" size={24} color={colors.deepTeal} />
+                </View>
+                <View style={styles.featureTextContainer}>
+                  <AppText style={styles.featureTitle}>{"Biometric Unlock"}</AppText>
+                  <AppText style={styles.featureSubtitle}>{"Unlock your vault with biometrics instead of your master password"}</AppText>
+                </View>
+              </View>
+              <Switch
+                value={biometricVaultEnabled}
+                onValueChange={handleBiometricVaultToggle}
+                trackColor={{ false: colors.iceGray, true: colors.deepTeal }}
+                thumbColor={colors.white}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
+
+      <MasterPasswordPrompt
+        visible={pwPromptVisible}
+        title="Confirm Master Password"
+        message="Enter your master password to change this setting."
+        onCancel={cancelPrivacyChange}
+        onSuccess={applyPrivacyChange}
+      />
     </SafeAreaView>
   );
 };
