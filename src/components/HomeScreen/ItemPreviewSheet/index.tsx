@@ -31,6 +31,9 @@ interface Props {
     onClose: () => void;
 }
 
+// How long a copied password lingers before the clipboard is auto-cleared.
+const CLIPBOARD_CLEAR_MS = 60_000;
+
 const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onClose }, ref) => {
     const safeAreaInsets = useSafeAreaInsets();
     const navigation = useNavigation<NavigationProp<AppScreensPropTypes>>();
@@ -46,6 +49,8 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     const [promptMessage, setPromptMessage] = useState("");
     // Action to run after the master password is verified.
     const pendingActionRef = useRef<(() => void) | null>(null);
+    // Pending clipboard-clear timer for copied passwords.
+    const clipboardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Gate a sensitive action behind master-password verification.
     const requireMasterPassword = (action: () => void, message: string) => {
@@ -77,7 +82,18 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
 
         const doCopy = () => {
             Clipboard.setString(textToCopy);
-            showSuccess('Copied', `${label} copied to clipboard`);
+            if (isPassword) {
+                showSuccess('Copied', 'Password copied — clipboard clears in 60s');
+                // Auto-clear the clipboard so the password doesn't linger for
+                // other apps. Reschedule if another password is copied.
+                if (clipboardTimerRef.current) clearTimeout(clipboardTimerRef.current);
+                clipboardTimerRef.current = setTimeout(() => {
+                    Clipboard.setString('');
+                    clipboardTimerRef.current = null;
+                }, CLIPBOARD_CLEAR_MS);
+            } else {
+                showSuccess('Copied', `${label} copied to clipboard`);
+            }
         };
 
         // If Enhanced Privacy is enabled and this is a password field, require
