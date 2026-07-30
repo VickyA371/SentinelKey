@@ -11,6 +11,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
+  // Overlay used to hide decrypted content from the app-switcher snapshot.
+  private var privacyView: UIView?
+
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -38,6 +41,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     return true
   }
   
+  // iOS can't block screenshots, but we can blur the snapshot the OS takes for
+  // the app switcher so passwords aren't exposed there.
+  func applicationWillResignActive(_ application: UIApplication) {
+    guard let window = window, privacyView == nil else { return }
+    let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
+    blurView.frame = window.bounds
+    blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    window.addSubview(blurView)
+    privacyView = blurView
+  }
+
+  func applicationDidBecomeActive(_ application: UIApplication) {
+    privacyView?.removeFromSuperview()
+    privacyView = nil
+  }
+
   private func showSplashScreen() {
     if let splashClass = NSClassFromString("SplashView") as? NSObject.Type,
       let splashInstance = splashClass.perform(NSSelectorFromString("sharedInstance"))?.takeUnretainedValue() as? NSObject {

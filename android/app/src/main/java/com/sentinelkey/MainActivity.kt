@@ -6,6 +6,7 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnable
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 import android.os.Bundle
+import android.view.WindowManager
 import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
 
 import com.splashview.SplashView
@@ -21,6 +22,12 @@ class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
     super.onCreate(savedInstanceState)
+    // Block screenshots and screen recording, and blank the recent-apps
+    // thumbnail — decrypted passwords must never leak to the OS.
+    window.setFlags(
+      WindowManager.LayoutParams.FLAG_SECURE,
+      WindowManager.LayoutParams.FLAG_SECURE,
+    )
     SplashView.showSplashView(this)
   }
 
