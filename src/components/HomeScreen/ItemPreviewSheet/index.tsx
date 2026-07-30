@@ -12,7 +12,6 @@ import AppText from "../../Common/AppText";
 import CommonAlert from "../../Common/CommonAlert";
 import alertStyles from "../../Common/CommonAlert/styles";
 import MasterPasswordPrompt from "../../Common/MasterPasswordPrompt";
-import auth from '@react-native-firebase/auth';
 
 // constants
 import colors from "../../../constants/colors";
@@ -23,7 +22,7 @@ import { AppScreensPropTypes } from "../../../navigation/types";
 import { RootState } from "../../../store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { decrypt } from "../../../utils/crypto";
+import { decryptField } from "../../../utils/vault";
 import Clipboard from '@react-native-clipboard/clipboard';
 import { categoriesMap } from "../../AddListItem/CategoryPickerSheet";
 
@@ -57,10 +56,15 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
 
     React.useEffect(() => {
         const fetchDecryptedPassword = async () => {
-            const currentUser = auth().currentUser;
-            if (item?.password && currentUser?.uid) {
-                const decrypted = await decrypt(item.password, currentUser.uid);
-                setDecryptedPassword(decrypted);
+            if (item?.password) {
+                try {
+                    // Decrypt with the in-memory vault DEK (vault is unlocked in-app).
+                    const decrypted = await decryptField(item.password);
+                    setDecryptedPassword(decrypted);
+                } catch (error) {
+                    console.error("Failed to decrypt item password:", error);
+                    setDecryptedPassword("");
+                }
             } else {
                 setDecryptedPassword("");
             }

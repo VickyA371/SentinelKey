@@ -25,7 +25,7 @@ import styles from "./styles";
 import { AddListItemFormValues } from "./types";
 import { addListItemSchema } from "../../../schema/validationSchema";
 import { AppScreensPropTypes } from "../../../navigation/types";
-import { encrypt, decrypt } from "../../../utils/crypto";
+import { encryptField, decryptField } from "../../../utils/vault";
 
 const AddListItem = () => {
     const navigation = useNavigation();
@@ -46,11 +46,15 @@ const AddListItem = () => {
 
     React.useEffect(() => {
         const loadPassword = async () => {
-            const currentUser = auth().currentUser;
-            if (isEditing && editItem?.password && currentUser?.uid) {
-                const decrypted = await decrypt(editItem.password, currentUser.uid);
-                form.setValue("password", decrypted);
-                form.setValue("confirmPassword", decrypted);
+            if (isEditing && editItem?.password) {
+                try {
+                    // Decrypt with the in-memory vault DEK (vault is unlocked in-app).
+                    const decrypted = await decryptField(editItem.password);
+                    form.setValue("password", decrypted);
+                    form.setValue("confirmPassword", decrypted);
+                } catch (error) {
+                    console.error("Failed to decrypt item for editing:", error);
+                }
             }
         };
         loadPassword();
@@ -65,7 +69,9 @@ const AddListItem = () => {
             const user = auth().currentUser;
             if (!user?.uid) throw new Error("User not authenticated");
 
-            const encryptedPassword = await encrypt(data.password, user.uid);
+            // Encrypt with the vault DEK (authenticated encryption). Fails closed:
+            // if the vault is somehow locked, this throws and we do NOT persist.
+            const encryptedPassword = await encryptField(data.password);
             const payload = {
                 title: data.itemName,
                 category: data.category,
