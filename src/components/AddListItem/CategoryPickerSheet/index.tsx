@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback } from "react";
-import { View, TouchableOpacity, FlatList } from "react-native";
+import React, { useCallback } from "react";
+import { View, TouchableOpacity } from "react-native";
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import Ionicons from "@react-native-vector-icons/ionicons";
 
@@ -37,27 +37,20 @@ const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose
         (props: any) => (
             <BottomSheetBackdrop
                 {...props}
+                // Dynamic-sized sheet rests at index 0; appear at 0 (not the
+                // default 1) so the backdrop doesn't flicker on open/close.
+                appearsOnIndex={0}
                 disappearsOnIndex={-1}
+                pressBehavior="close"
             />
         ),
         []
     );
 
-    const renderItem = ({ item }: { item: typeof CATEGORIES[0] }) => (
-        <TouchableOpacity
-            style={styles.categoryItem}
-            onPress={() => {
-                onSelect(item.name.toLowerCase());
-                onClose();
-            }}
-        >
-            <View style={styles.iconWrapper}>
-                <Ionicons name={item.icon as any} size={20} color={colors.deepTeal} />
-            </View>
-            <AppText style={styles.categoryName}>{item.name}</AppText>
-            <Ionicons name="chevron-forward" size={16} color={colors.iceGray} />
-        </TouchableOpacity>
-    );
+    const handleSelect = (item: typeof CATEGORIES[0]) => {
+        onSelect(item.name.toLowerCase());
+        onClose();
+    };
 
     return (
         <BottomSheetModal
@@ -65,7 +58,6 @@ const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose
             enableDynamicSizing
             enableDismissOnClose
             backdropComponent={renderBackdrop}
-            onDismiss={onClose}
             handleIndicatorStyle={styles.indicator}
             backgroundStyle={styles.background}
         >
@@ -77,12 +69,19 @@ const CategoryPickerSheet = React.forwardRef<BottomSheetModal, Props>(({ onClose
                     </TouchableOpacity>
                 </View>
 
-                <FlatList
-                    data={CATEGORIES}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                />
+                {CATEGORIES.map((item) => (
+                    <TouchableOpacity
+                        key={item.id}
+                        style={styles.categoryItem}
+                        onPress={() => handleSelect(item)}
+                    >
+                        <View style={styles.iconWrapper}>
+                            <Ionicons name={item.icon as any} size={20} color={colors.deepTeal} />
+                        </View>
+                        <AppText style={styles.categoryName}>{item.name}</AppText>
+                        <Ionicons name="chevron-forward" size={16} color={colors.iceGray} />
+                    </TouchableOpacity>
+                ))}
             </BottomSheetView>
         </BottomSheetModal>
     );
