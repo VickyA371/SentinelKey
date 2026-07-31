@@ -131,11 +131,25 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
         pendingActionRef.current = null;
     };
 
+    // Fired by the library AFTER the sheet is dismissed. Only reset transient
+    // view state here — do NOT call dismiss() again (that double-dismiss breaks
+    // the modal so it won't present a second time).
+    const handleDismiss = useCallback(() => {
+        setShowPassword(false);
+        setPwPromptVisible(false);
+        setDeleteModalVisible(false);
+        pendingActionRef.current = null;
+    }, []);
+
     const renderBackdrop = useCallback(
         (props: any) => (
             <BottomSheetBackdrop
                 {...props}
+                // Dynamic-sized sheet rests at index 0, so the backdrop must
+                // appear at 0 (not the default 1) or it flickers on open/close.
+                appearsOnIndex={0}
                 disappearsOnIndex={-1}
+                pressBehavior="close"
             />
         ),
         []
@@ -177,7 +191,7 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
             <BottomSheetModal
                 ref={ref}
                 backdropComponent={renderBackdrop}
-                onDismiss={onClose}
+                onDismiss={handleDismiss}
                 handleIndicatorStyle={styles.indicator}
                 backgroundStyle={styles.background}
                 enableDismissOnClose
