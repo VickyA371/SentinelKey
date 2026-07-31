@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, ScrollView, TouchableOpacity } from "react-native";
 import { showSuccess, showError } from "../../../utils/toast";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,6 +6,7 @@ import Ionicons from "@react-native-vector-icons/ionicons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
+import { useSelector } from 'react-redux';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 
@@ -15,6 +16,7 @@ import AppHeader from "../../../components/Common/AppHeader";
 import AppInput from "../../../components/Common/AppInput";
 import CategoryField from "../../../components/AddListItem/CategoryField";
 import ValidationController from "../../../components/Common/ValidationController";
+import MasterPasswordPrompt from "../../../components/Common/MasterPasswordPrompt";
 
 // constants
 import colors from "../../../constants/colors";
@@ -25,6 +27,7 @@ import styles from "./styles";
 import { AddListItemFormValues } from "./types";
 import { addListItemSchema } from "../../../schema/validationSchema";
 import { AppScreensPropTypes } from "../../../navigation/types";
+import { RootState } from "../../../store";
 import { encryptField, decryptField } from "../../../utils/vault";
 
 const AddListItem = () => {
@@ -44,27 +47,83 @@ const AddListItem = () => {
         resolver: yupResolver(addListItemSchema),
     });
 
-    React.useEffect(() => {
-        const loadPassword = async () => {
-            if (isEditing && editItem?.password) {
-                try {
-                    // Decrypt with the in-memory vault DEK (vault is unlocked in-app).
-                    const decrypted = await decryptField(editItem.password);
-                    form.setValue("password", decrypted);
-                    form.setValue("confirmPassword", decrypted);
-                } catch (error) {
-                    console.error("Failed to decrypt item for editing:", error);
-                }
+    const enhancedPrivacyEnabled = useSelector(
+        (state: RootState) => state.security.enhancedPrivacyEnabled,
+    );
+
+    const [pwPromptVisible, setPwPromptVisible] = useState(false);
+    const [promptMessage, setPromptMessage] = useState("");
+    const [passwordVisible, setPasswordVisible] = useState(false);
+    const [confirmVisible, setConfirmVisible] = useState(false);
+    // Once the master password is verified to reveal, both fields (same secret)
+    // stay revealable for the rest of this screen session.
+    const [revealAuthorized, setRevealAuthorized] = useState(false);
+    // Action to run after the master password is verified.
+    const pendingActionRef = useRef<(() => void) | null>(null);
+    // Ensures the edit-mode password is loaded only once.
+    const didInitPasswordRef = useRef(false);
+
+    const requireMasterPassword = (action: () => void, message: string) => {
+        pendingActionRef.current = action;
+        setPromptMessage(message);
+        setPwPromptVisible(true);
+    };
+
+    const handlePromptSuccess = () => {
+        setPwPromptVisible(false);
+        const action = pendingActionRef.current;
+        pendingActionRef.current = null;
+        action?.();
+    };
+
+    const handlePromptCancel = () => {
+        setPwPromptVisible(false);
+        pendingActionRef.current = null;
+    };
+
+    // Reveal a password field. Hiding is always allowed; revealing while editing
+    // with Enhanced Privacy on requires the master password first.
+    const requestReveal = (currentlyVisible: boolean, setVisible: (v: boolean) => void) => {
+        if (currentlyVisible) {
+            setVisible(false);
+            return;
+        }
+        // Gate the first reveal only; once verified this session, both fields
+        // reveal freely (they hold the same password).
+        if (isEditing && enhancedPrivacyEnabled && !revealAuthorized) {
+            requireMasterPassword(() => {
+                setRevealAuthorized(true);
+                setVisible(true);
+            }, 'Enter your master password to view the password.');
+            return;
+        }
+        setVisible(true);
+    };
+
+    useEffect(() => {
+        if (didInitPasswordRef.current) return;
+        if (!isEditing || !editItem?.password) return;
+        didInitPasswordRef.current = true;
+
+        // Load the saved password into the (masked) fields so the edit can be
+        // saved. It stays hidden until the user reveals it (gated above) — no
+        // prompt on open.
+        (async () => {
+            try {
+                const decrypted = await decryptField(editItem.password);
+                form.setValue("password", decrypted);
+                form.setValue("confirmPassword", decrypted);
+            } catch (error) {
+                console.error("Failed to decrypt item for editing:", error);
             }
-        };
-        loadPassword();
+        })();
     }, [isEditing, editItem, form]);
 
     const handleBack = () => {
         navigation.goBack();
     };
 
-    const onSubmit = async (data: AddListItemFormValues) => {
+    const persistItem = async (data: AddListItemFormValues) => {
         try {
             const user = auth().currentUser;
             if (!user?.uid) throw new Error("User not authenticated");
@@ -96,6 +155,16 @@ const AddListItem = () => {
                 isEditing ? "Failed to update password item. Please try again." : "Failed to add password item. Please try again."
             );
         }
+    };
+
+    const onSubmit = (data: AddListItemFormValues) => {
+        // Saving an edit always requires the master password, regardless of the
+        // Enhanced Privacy setting. Adding a new item does not.
+        if (isEditing) {
+            requireMasterPassword(() => persistItem(data), 'Enter your master password to save changes.');
+            return;
+        }
+        persistItem(data);
     };
 
     return (
@@ -135,6 +204,8 @@ const AddListItem = () => {
                         <AppInput
                             placeholder="Enter password"
                             securedText
+                            secureVisible={passwordVisible}
+                            onToggleSecure={() => requestReveal(passwordVisible, setPasswordVisible)}
                             placeholderTextColor={colors.mutedBlueGray}
                             containerStyle={styles.inputContainer}
                             style={styles.input}
@@ -147,6 +218,8 @@ const AddListItem = () => {
                         <AppInput
                             placeholder="Re-enter password"
                             securedText
+                            secureVisible={confirmVisible}
+                            onToggleSecure={() => requestReveal(confirmVisible, setConfirmVisible)}
                             placeholderTextColor={colors.mutedBlueGray}
                             containerStyle={styles.inputContainer}
                             style={styles.input}
@@ -182,6 +255,13 @@ const AddListItem = () => {
                     <AppText style={styles.addItemButtonText}>{isEditing ? 'Save Changes' : 'Add Item'}</AppText>
                 </TouchableOpacity>
             </View>
+
+            <MasterPasswordPrompt
+                visible={pwPromptVisible}
+                message={promptMessage}
+                onCancel={handlePromptCancel}
+                onSuccess={handlePromptSuccess}
+            />
         </SafeAreaView>
     );
 };

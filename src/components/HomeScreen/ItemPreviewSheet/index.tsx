@@ -156,23 +156,17 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
     );
 
     const handleEdit = () => {
-        // Editing is a sensitive action — always confirm identity first.
-        requireMasterPassword(() => {
-            onClose();
-            navigation.navigate("AddListItem", { item });
-        }, 'Enter your master password to edit this item.');
+        onClose();
+        navigation.navigate("AddListItem", { item });
     };
 
     const handleDeletePress = () => {
-        // Confirm identity before showing the delete confirmation.
-        requireMasterPassword(() => {
-            setDeleteModalVisible(true);
-        }, 'Enter your master password to delete this item.');
+        // Show the confirmation alert first.
+        setDeleteModalVisible(true);
     };
 
-    const handleConfirmDelete = async () => {
+    const performDelete = async () => {
         try {
-            setDeleteModalVisible(false);
             if (item?.id) {
                 await firestore().collection(COLLECTIONS.PASSWORDS).doc(item.id).delete();
                 showSuccess('Success', 'Password item deleted successfully!');
@@ -182,6 +176,12 @@ const ItemPreviewSheet = React.forwardRef<BottomSheetModal, Props>(({ item, onCl
             console.error("Error deleting password item:", error);
             showError('Error', 'Failed to delete password item. Please try again.');
         }
+    };
+
+    const handleConfirmDelete = () => {
+        // Alert confirmed → verify identity, then delete.
+        setDeleteModalVisible(false);
+        requireMasterPassword(performDelete, 'Enter your master password to delete this item.');
     };
 
     if (!item) return null;

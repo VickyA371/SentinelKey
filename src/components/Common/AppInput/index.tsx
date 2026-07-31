@@ -22,6 +22,14 @@ type AppInputProps = {
   containerStyle?: ViewStyle | (ViewStyle | false | undefined)[]
   error?: string
   securedText?: boolean
+  /**
+   * Optional controlled reveal. When provided, the parent owns whether the text
+   * is visible (true = plaintext) and is notified via `onToggleSecure` when the
+   * eye is tapped — letting it gate the reveal (e.g. behind a master password).
+   * When omitted, AppInput manages the toggle internally (default behaviour).
+   */
+  secureVisible?: boolean
+  onToggleSecure?: (nextVisible: boolean) => void
 } & TextInputProps
 
 function AppInput(props: AppInputProps) {
@@ -32,10 +40,24 @@ function AppInput(props: AppInputProps) {
     containerStyle,
     error,
     securedText,
+    secureVisible,
+    onToggleSecure,
     ...rest
   } = props;
 
-  const [secureTextEntry, setSecureTextEntry] = useState(securedText ?? false)
+  const [internalSecureEntry, setInternalSecureEntry] = useState(securedText ?? false)
+
+  const isControlled = secureVisible !== undefined;
+  // secureTextEntry === true means the text is MASKED.
+  const secureTextEntry = isControlled ? !secureVisible : internalSecureEntry;
+
+  const handleToggleSecure = () => {
+    if (isControlled) {
+      onToggleSecure?.(!secureVisible); // request the next visibility from the parent
+    } else {
+      setInternalSecureEntry(prevState => !prevState);
+    }
+  };
 
   return (
     <>
@@ -47,10 +69,7 @@ function AppInput(props: AppInputProps) {
           secureTextEntry={secureTextEntry}
         />
         {rightIcon ?? securedText ? (
-          <TouchableOpacity
-            onPress={() => {
-              setSecureTextEntry(prevState => !prevState)
-            }}>
+          <TouchableOpacity onPress={handleToggleSecure}>
             <Icon
               name={secureTextEntry ? 'eye' : 'eye-off'}
               size={18}
