@@ -10,8 +10,8 @@ export default {
     lightCoolGray: '#E7EEF1',
     mutedTeal: '#4F7A87',
     iceGray: '#D6E0E4',
-    red: 'red',
-    red10: 'rgba(255, 0, 0, 0.1)',
+    red: '#E5484D',
+    red10: 'rgba(229, 72, 77, 0.1)',
     lightCyanBlue: '#E6F2F5',
     lightSky: 'rgba(201, 228, 242, 0.3)'
 }

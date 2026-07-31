@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
     },
     erroredPicker: {
-        borderColor: 'red',
+        borderColor: colors.red,
     },
     categoryValue: {
         fontSize: 16,

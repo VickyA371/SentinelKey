@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   erroredContainer: {
-    borderColor: 'red',
+    borderColor: colors.red,
     marginBottom: 5
   }
 })
